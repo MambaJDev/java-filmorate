@@ -7,12 +7,10 @@ import ru.yandex.practicum.filmorate.annotation.NotReleaseDateBefore1895;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Null;
 
 @Builder
 @Data
 public class Film {
-    @Null
     private int id;
     @NotBlank
     private String name;

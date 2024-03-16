@@ -6,12 +6,10 @@ import ru.yandex.practicum.filmorate.annotation.NotFutureBirthday;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Null;
 
 @Builder
 @Data
 public class User {
-    @Null
     private int id;
     @Email
     @NotBlank

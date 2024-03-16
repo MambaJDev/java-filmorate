@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -12,8 +11,6 @@ import java.time.LocalDate;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserTest {
     private Validator validator;
@@ -27,8 +24,9 @@ class UserTest {
 
     @BeforeEach
     public void setUp() {
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        validator = factory.getValidator();
+        try (ValidatorFactory factory = Validation.buildDefaultValidatorFactory()) {
+            validator = factory.getValidator();
+        }
     }
 
     @Test
@@ -44,6 +42,7 @@ class UserTest {
 
         assertEquals(1, violations.size(), "Валидация не работает");
     }
+
     @Test
     void failValidateUserWhenEmailIsNull() {
         user.setEmail(null);
