@@ -43,7 +43,7 @@ public class FilmController {
     }
 
     @GetMapping
-    public List getAll() {
+    public List<Film> getAll() {
         return new ArrayList<>(films.values());
     }
 }
