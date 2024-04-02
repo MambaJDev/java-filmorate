@@ -7,11 +7,13 @@ import ru.yandex.practicum.filmorate.annotation.NotReleaseDateBefore1895;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.HashSet;
+import java.util.Set;
 
 @Builder
 @Data
 public class Film {
-    private int id;
+    private Long id;
     @NotBlank
     private String name;
     @Length(max = 200)
@@ -20,4 +22,7 @@ public class Film {
     private String releaseDate;
     @Min(1)
     private long duration;
+    private final Set<Long> usersIdWhoLike = new HashSet<>();
+    @Min(0)
+    private int like;
 }

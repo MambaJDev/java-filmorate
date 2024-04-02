@@ -6,11 +6,13 @@ import ru.yandex.practicum.filmorate.annotation.NotFutureBirthday;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import java.util.HashSet;
+import java.util.Set;
 
 @Builder
 @Data
 public class User {
-    private int id;
+    private Long id;
     @Email
     @NotBlank
     private String email;
@@ -19,4 +21,5 @@ public class User {
     private String name;
     @NotFutureBirthday
     private String birthday;
+    private final Set<Long> friends = new HashSet<>();
 }

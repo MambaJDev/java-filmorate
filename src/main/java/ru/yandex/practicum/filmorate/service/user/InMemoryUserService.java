@@ -1,0 +1,99 @@
+package ru.yandex.practicum.filmorate.service.user;
+
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Service
+@Slf4j
+@AllArgsConstructor
+public class InMemoryUserService implements UserService {
+    private final UserStorage userStorage;
+
+    @Override
+    public void addFriend(Long userId, Long friendId) {
+        checkUserIdIsPresent(userId);
+        checkUserIdIsPresent(friendId);
+        User user = userStorage.getUserById(userId);
+        User friend = userStorage.getUserById(friendId);
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId);
+        log.info("Пользователь успешно добавлен в друзья");
+    }
+
+    @Override
+    public void deleteFriend(Long userId, Long friendId) {
+        checkUserIdIsPresent(userId);
+        checkUserIdIsPresent(friendId);
+        User user = userStorage.getUserById(userId);
+        User friend = userStorage.getUserById(friendId);
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
+        log.info("Пользователь успешно удален из друзей");
+    }
+
+    @Override
+    public List<User> getAllFriends(Long userId) {
+        checkUserIdIsPresent(userId);
+        log.info("Получен список друзей Пользлвателя с id = {}", userId);
+        return userStorage.getUserById(userId).getFriends().stream()
+                .map(userStorage::getUserById)
+                .sorted(Comparator.comparingLong(User::getId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long userId, Long otherId) {
+        checkUserIdIsPresent(userId);
+        checkUserIdIsPresent(otherId);
+        List<User> commonFriends = new ArrayList<>();
+        Set<Long> userFriends = userStorage.getUserById(userId).getFriends();
+        Set<Long> otherUserFriends = userStorage.getUserById(otherId).getFriends();
+        for (Long firstId : userFriends) {
+            for (Long secondId : otherUserFriends) {
+                if (firstId.equals(secondId)) {
+                    commonFriends.add(userStorage.getUserById(firstId));
+                }
+            }
+        }
+        log.info("Получен список общих друзей Пользлвателя с id = {} и Пользователя с id = {}", userId, otherId);
+        return commonFriends;
+    }
+
+    @Override
+    public User add(User user) {
+        return userStorage.add(user);
+    }
+
+    @Override
+    public User delete(User user) {
+        return userStorage.delete(user);
+    }
+
+    @Override
+    public User update(User user) {
+        return userStorage.update(user);
+    }
+
+    @Override
+    public List<User> getAll() {
+        return userStorage.getAll();
+    }
+
+    @Override
+    public void checkUserIdIsPresent(Long id) {
+        if (userStorage.getUserById(id) == null) {
+            log.info("Пользователь с id = {} не найден", id);
+            throw new NotFoundException("Пользователь с таким ID не существует");
+        }
+    }
+}

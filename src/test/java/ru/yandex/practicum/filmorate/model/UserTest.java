@@ -27,7 +27,7 @@ class UserTest {
 
     private static User getUserWithSettings(String change, String value) {
         final User user = User.builder()
-                .id(1)
+                .id(1L)
                 .email("king@mail.ru")
                 .login("King")
                 .name("Dmitry")

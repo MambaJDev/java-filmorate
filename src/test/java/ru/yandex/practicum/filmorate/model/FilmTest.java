@@ -26,7 +26,7 @@ class FilmTest {
 
     private static Film getFilmWithSettings(String change, String value) {
         final Film film = Film.builder()
-                .id(1)
+                .id(1L)
                 .name("The Mask")
                 .description("The Mask is a 1994 American superhero comedy film directed by Chuck Russell " +
                         "and produced by Bob Engelman from a screenplay by Mike Werb and a story by Michael Fallon " +
