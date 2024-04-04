@@ -21,7 +21,7 @@ public class ErrorHandler {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundObject(NotFoundException exception) {
+    public ErrorResponse handleNotFoundObject(final NotFoundException exception) {
         log.error("404 {}", exception.getMessage(), exception);
         return new ErrorResponse(exception.getMessage());
     }
