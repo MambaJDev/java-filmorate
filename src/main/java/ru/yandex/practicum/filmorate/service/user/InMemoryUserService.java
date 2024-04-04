@@ -7,10 +7,8 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,7 +25,7 @@ public class InMemoryUserService implements UserService {
         User friend = userStorage.getUserById(friendId);
         user.getFriends().add(friendId);
         friend.getFriends().add(userId);
-        log.info("Пользователь успешно добавлен в друзья");
+        log.info("Пользователь c id = {} стал другом пользователю {}", friendId, userId);
     }
 
     @Override
@@ -55,18 +53,11 @@ public class InMemoryUserService implements UserService {
     public List<User> getCommonFriends(Long userId, Long otherId) {
         checkUserIdIsPresent(userId);
         checkUserIdIsPresent(otherId);
-        List<User> commonFriends = new ArrayList<>();
-        Set<Long> userFriends = userStorage.getUserById(userId).getFriends();
-        Set<Long> otherUserFriends = userStorage.getUserById(otherId).getFriends();
-        for (Long firstId : userFriends) {
-            for (Long secondId : otherUserFriends) {
-                if (firstId.equals(secondId)) {
-                    commonFriends.add(userStorage.getUserById(firstId));
-                }
-            }
-        }
         log.info("Получен список общих друзей Пользлвателя с id = {} и Пользователя с id = {}", userId, otherId);
-        return commonFriends;
+        return userStorage.getUserById(userId).getFriends().stream()
+                .filter(id -> userStorage.getUserById(otherId).getFriends().contains(id))
+                .map(userStorage::getUserById)
+                .collect(Collectors.toList());
     }
 
     @Override
