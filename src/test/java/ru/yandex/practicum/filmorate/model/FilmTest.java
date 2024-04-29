@@ -25,15 +25,14 @@ class FilmTest {
     }
 
     private static Film getFilmWithSettings(String change, String value) {
-        final Film film = Film.builder()
-                .id(1L)
-                .name("The Mask")
-                .description("The Mask is a 1994 American superhero comedy film directed by Chuck Russell " +
+        final Film film = new Film()
+                .setId(1L)
+                .setName("The Mask")
+                .setDescription("The Mask is a 1994 American superhero comedy film directed by Chuck Russell " +
                         "and produced by Bob Engelman from a screenplay by Mike Werb and a story by Michael Fallon " +
                         "and Mark Verheiden.")
-                .releaseDate("1994-07-29")
-                .duration(97)
-                .build();
+                .setReleaseDate("1994-07-29")
+                .setDuration(97L);
 
         switch (change) {
             case "name":

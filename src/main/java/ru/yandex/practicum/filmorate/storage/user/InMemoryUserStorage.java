@@ -6,9 +6,11 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -58,7 +60,58 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(long id) {
+    public User getUserById(Long id) {
         return users.get(id);
+    }
+
+    public User addFriend(Long userId, Long friendId) {
+        checkUserIdIsPresent(userId);
+        checkUserIdIsPresent(friendId);
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+        user.getFriends().add(friendId);
+        friend.getFriends().add(userId);
+        log.info("Пользователь c id = {} стал другом пользователю {}", friendId, userId);
+        return user;
+    }
+
+
+    public void checkUserIdIsPresent(Long id) {
+        if (getUserById(id) == null) {
+            log.info("Пользователь с id = {} не найден", id);
+            throw new NotFoundException("Пользователь с таким ID не существует");
+        }
+    }
+
+    @Override
+    public List<User> getAllFriends(Long id) {
+        checkUserIdIsPresent(id);
+        log.info("Получен список друзей Пользлвателя с id = {}", id);
+        return getUserById(id).getFriends().stream()
+                .map(this::getUserById)
+                .sorted(Comparator.comparingLong(User::getId))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> getCommonFriends(Long userId, Long otherId) {
+        checkUserIdIsPresent(userId);
+        checkUserIdIsPresent(otherId);
+        log.info("Получен список общих друзей Пользлвателя с id = {} и Пользователя с id = {}", userId, otherId);
+        return getUserById(userId).getFriends().stream()
+                .filter(id -> getUserById(otherId).getFriends().contains(id))
+                .map(this::getUserById)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteFriend(Long userId, Long friendId) {
+        checkUserIdIsPresent(userId);
+        checkUserIdIsPresent(friendId);
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+        user.getFriends().remove(friendId);
+        friend.getFriends().remove(userId);
+        log.info("Пользователь успешно удален из друзей");
     }
 }

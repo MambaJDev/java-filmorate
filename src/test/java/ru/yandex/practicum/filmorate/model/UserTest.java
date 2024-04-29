@@ -26,13 +26,12 @@ class UserTest {
     }
 
     private static User getUserWithSettings(String change, String value) {
-        final User user = User.builder()
-                .id(1L)
-                .email("king@mail.ru")
-                .login("King")
-                .name("Dmitry")
-                .birthday("1996-11-02")
-                .build();
+        final User user = new User()
+                .setId(1L)
+                .setEmail("king@mail.ru")
+                .setLogin("King")
+                .setName("Dmitry")
+                .setBirthday("1996-11-02");
 
         switch (change) {
             case "email":

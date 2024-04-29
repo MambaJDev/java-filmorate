@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface FilmService {
 
-    void addLike(long filmId, long userId);
+    void addLike(Long filmId, Long userId);
 
-    void deleteLike(long filmId, long userId);
+    void deleteLike(Long filmId, Long userId);
 
     List<Film> getPopularFilms(int count);
 
@@ -20,5 +20,5 @@ public interface FilmService {
 
     List<Film> getAll();
 
-    void checkFilmIdIsPresent(Long id);
+    Film getFilmById(Long id);
 }

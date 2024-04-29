@@ -1,7 +1,8 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 import org.hibernate.validator.constraints.Length;
 import ru.yandex.practicum.filmorate.annotation.NotReleaseDateBefore1895;
 
@@ -10,8 +11,9 @@ import javax.validation.constraints.NotBlank;
 import java.util.HashSet;
 import java.util.Set;
 
-@Builder
-@Data
+@Getter
+@Setter
+@Accessors(chain = true)
 public class Film {
     private Long id;
     @NotBlank
@@ -21,8 +23,9 @@ public class Film {
     @NotReleaseDateBefore1895
     private String releaseDate;
     @Min(1)
-    private long duration;
-    private final Set<Long> usersIdWhoLike = new HashSet<>();
-    @Min(0)
-    private int like;
+    private Long duration;
+    private Mpa mpa;
+    private Set<Genre> genres = new HashSet<>();
+    private Set<Long> userIdLikes = new HashSet<>();
+    private int likes = 0;
 }

@@ -9,7 +9,6 @@ import ru.yandex.practicum.filmorate.service.user.UserService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -19,35 +18,22 @@ public class InMemoryFilmService implements FilmService {
     private final UserService userService;
 
     @Override
-    public void addLike(long filmId, long userId) {
+    public void addLike(Long filmId, Long userId) {
         checkFilmIdIsPresent(filmId);
         userService.checkUserIdIsPresent(userId);
-        Film film = filmStorage.getFilmById(filmId);
-        if (film.getUsersIdWhoLike().add(userId)) {
-            film.setLike(film.getLike() + 1);
-            log.info("User {} успешно поставил лайк фильму {}, количество лайков = {}", userId, filmId, film.getLike());
-        }
+        filmStorage.addLike(filmId, userId);
     }
 
     @Override
-    public void deleteLike(long filmId, long userId) {
+    public void deleteLike(Long filmId, Long userId) {
         checkFilmIdIsPresent(filmId);
         userService.checkUserIdIsPresent(userId);
-        Film film = filmStorage.getFilmById(filmId);
-        if (film.getUsersIdWhoLike().remove(userId)) {
-            film.setLike(film.getLike() - 1);
-            log.info("User успешно удалил лайк, количество лайков = {}", film.getLike());
-        }
+        filmStorage.deleteLike(filmId, userId);
     }
 
     @Override
     public List<Film> getPopularFilms(int count) {
-        List<Film> popularFilms = filmStorage.getAll().stream()
-                .sorted((film0, film1) -> film1.getLike() - film0.getLike())//// сделать сортировку
-                .limit(count)
-                .collect(Collectors.toList());
-        log.info("Получен список из популярных фильмов, их количество {}", popularFilms.size());
-        return popularFilms;
+        return filmStorage.getPopularFilms(count);
     }
 
     @Override
@@ -57,11 +43,13 @@ public class InMemoryFilmService implements FilmService {
 
     @Override
     public Film delete(Film film) {
+        checkFilmIdIsPresent(film.getId());
         return filmStorage.delete(film);
     }
 
     @Override
     public Film update(Film film) {
+        checkFilmIdIsPresent(film.getId());
         return filmStorage.update(film);
     }
 
@@ -71,7 +59,12 @@ public class InMemoryFilmService implements FilmService {
     }
 
     @Override
-    public void checkFilmIdIsPresent(Long id) {
+    public Film getFilmById(Long id) {
+        checkFilmIdIsPresent(id);
+        return filmStorage.getFilmById(id);
+    }
+
+    private void checkFilmIdIsPresent(Long id) {
         if (filmStorage.getFilmById(id) == null) {
             log.info("Фильма с id = {} не найден", id);
             throw new NotFoundException("Фильма с таким ID не существует");
