@@ -31,7 +31,7 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testGetUserById() {
+    void getUserById() {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
@@ -45,24 +45,34 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testUpdateUser() {
-        final User user1 = userForTest();
+    void addUserToDatabase() {
+        final User user = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
-        userDao.add(user1);
+        userDao.add(user);
 
-        final User user2 = userDao.update(new User().setId(1L).setLogin("Dima").setEmail("mamba84@mail.ru"));
+        final List<User> savedList = userDao.getAll();
 
-        assertThat(user2)
+        assertThat(savedList.size())
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isNotEqualTo(user1);
-
-        assertThat(user2.getId())
-                .isEqualTo(user1.getId());
+                .isEqualTo(1);
     }
 
     @Test
-    void testDeleteUser() {
+    void updateUser() {
+        final User user1 = userForTest();
+        final UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        userDao.add(user1);
+        userDao.update(new User().setId(1L).setLogin("Dima").setEmail("mamba84@mail.ru"));
+        final User savedUser = userDao.getUserById(1L);
+
+        assertThat(savedUser.getLogin())
+                .usingDefaultComparator()
+                .isEqualTo("Dima");
+    }
+
+    @Test
+    void deleteUser() {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
@@ -73,7 +83,7 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testGetAllUsers() {
+    void getAllUsers() {
         final User newUser = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(newUser);
@@ -88,7 +98,7 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testAddFriend() {
+    void addFriend() {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
@@ -108,7 +118,7 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testGetAllFriends() {
+    void getAllFriends() {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
@@ -129,7 +139,7 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testGetCommonFriends() {
+    void getCommonFriends() {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
@@ -148,7 +158,7 @@ class UserDaoImplTest {
     }
 
     @Test
-    void testDeleteFriend() {
+    void deleteFriend() {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);

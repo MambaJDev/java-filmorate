@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.service.genredao;
+package ru.yandex.practicum.filmorate.service.genre;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GenreDaoServiceImpl implements GenreDaoService {
+public class GenreDBService implements GenreService {
 
     private final GenreDao genreDao;
 

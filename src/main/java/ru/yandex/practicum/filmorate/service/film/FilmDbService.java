@@ -1,22 +1,25 @@
-package ru.yandex.practicum.filmorate.service.filmdao;
+package ru.yandex.practicum.filmorate.service.film;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.film.FilmDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.userdao.UserDaoService;
+import ru.yandex.practicum.filmorate.service.user.UserService;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class FilmDaoServiceImpl implements FilmDaoService {
+@Qualifier("filmDbService")
+public class FilmDbService implements FilmService {
 
     private final FilmDao filmDao;
-    private final UserDaoService userDaoService;
+    @Qualifier("userDbService")
+    private final UserService userService;
 
     @Override
     public Film add(Film film) {
@@ -29,6 +32,12 @@ public class FilmDaoServiceImpl implements FilmDaoService {
         log.info("Поступил PUT-запрос на обновление фильма с ID = {} в базе данных", film.getId());
         checkFilmIsPresent(film.getId());
         return filmDao.update(film);
+    }
+
+    @Override
+    public Film delete(Film film) {
+        log.info("Поступил DELETE-запрос на удаление фильма с ID = {} в базе данных", film.getId());
+        return filmDao.delete(film);
     }
 
     @Override
@@ -54,7 +63,7 @@ public class FilmDaoServiceImpl implements FilmDaoService {
     public void addLike(Long filmID, Long userID) {
         log.info("Поступил PUT-запрос на добавление лайка фильму {} юзером {}", filmID, userID);
         checkFilmIsPresent(filmID);
-        userDaoService.checkUserIsPresent(userID);
+        userService.checkUserIdIsPresent(userID);
         filmDao.addLike(filmID, userID);
     }
 
@@ -62,7 +71,7 @@ public class FilmDaoServiceImpl implements FilmDaoService {
     public void deleteLike(Long filmID, Long userID) {
         log.info("Поступил DELETE-запрос на удаление лайка у фильма {} юзером {}", filmID, userID);
         checkFilmIsPresent(filmID);
-        userDaoService.checkUserIsPresent(userID);
+        userService.checkUserIdIsPresent(userID);
         filmDao.deleteLike(filmID, userID);
     }
 

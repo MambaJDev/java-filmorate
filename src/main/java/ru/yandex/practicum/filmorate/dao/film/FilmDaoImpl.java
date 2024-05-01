@@ -6,8 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dao.genre.GenreDao;
-import ru.yandex.practicum.filmorate.dao.mpa.MpaDao;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -21,8 +19,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FilmDaoImpl implements FilmDao {
     private final JdbcTemplate jdbcTemplate;
-    private final MpaDao mpaDao;
-    private final GenreDao genreDao;
 
     @Override
     public Film add(Film film) {
@@ -44,6 +40,16 @@ public class FilmDaoImpl implements FilmDao {
 
         log.info("Фильм с ID = {} полностью добавился имя = {}, реитенг = {}, списк жаннров = {}",
                 film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
+        return film;
+    }
+
+    @Override
+    public Film delete(Film film) {
+        String sqlQuery = "delete from films where id = ?";
+        if (jdbcTemplate.update(sqlQuery, film.getId()) == 0) {
+            log.info("Операция обновления данных фильма в БД закончилась неудачей");
+        }
+        log.info("Фильм с именем {} и ID {} успешно удален", film.getName(), film.getId());
         return film;
     }
 
@@ -128,7 +134,7 @@ public class FilmDaoImpl implements FilmDao {
                     .setLikes(rs.getInt("likes"));
 
             if (checkMpaIsPresent(rs.getLong("mpa_id"))) {
-                film.setMpa(mpaDao.getMpaById(rs.getLong("mpa_id")));
+                film.setMpa(getMpaById(rs.getLong("mpa_id")));
 
             }
             getGenresByFilmId(rs.getLong("id"));
@@ -139,7 +145,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     private boolean checkMpaIsPresent(Long id) {
-        return mpaDao.getAllMpa().stream().anyMatch(mpa -> mpa.getId().equals(id));
+        return getAllMpa().stream().anyMatch(mpa -> mpa.getId().equals(id));
     }
 
     private Set<Genre> getGenresByFilmId(Long id) {
@@ -150,7 +156,7 @@ public class FilmDaoImpl implements FilmDao {
 
     private void setFilmMpa(Film film) {
         Long mpaId = film.getMpa().getId();
-        String mpaName = mpaDao.getMpaById(mpaId).getName();
+        String mpaName = getMpaById(mpaId).getName();
         film.setMpa(new Mpa(mpaId, mpaName));
         jdbcTemplate.update("update films set mpa_id = ? where id = ?", mpaId, film.getId());
         log.info("Фильму с ID = {} присвоился рейтинг {}", film.getId(), mpaName);
@@ -159,7 +165,7 @@ public class FilmDaoImpl implements FilmDao {
     private void setFilmGenres(Film film) {
         Set<Genre> genres = film.getGenres();
         genres.forEach(genre -> {
-            genre.setName(genreDao.getGenreById(genre.getId()).getName());
+            genre.setName(getGenreById(genre.getId()).getName());
             jdbcTemplate.update("insert into films_genres(film_id, genre_id) values (?, ?)",
                     film.getId(), genre.getId());
         });
@@ -174,5 +180,20 @@ public class FilmDaoImpl implements FilmDao {
             return builder.substring(0, builder.length() - 2);
         }
         return "null";
+    }
+
+    private Mpa getMpaById(Long id) {
+        return jdbcTemplate.queryForObject("select * from mpa_ratings where id = ?", (rs, rowNum) ->
+                new Mpa(rs.getLong("id"), rs.getString("name")), id);
+    }
+
+    private List<Mpa> getAllMpa() {
+        return jdbcTemplate.query("select * from mpa_ratings", (rs, rowNum) ->
+                new Mpa(rs.getLong("id"), rs.getString("name")));
+    }
+
+    private Genre getGenreById(Long id) {
+        return jdbcTemplate.queryForObject("select * from genres where id = ?", (rs, rowNum) ->
+                new Genre(rs.getLong("id"), rs.getString("name")), id);
     }
 }

@@ -19,7 +19,7 @@ class GenreDaoImplTest {
     private final JdbcTemplate jdbcTemplate;
 
     @Test
-    void testGetAllGenres() {
+    void getAllGenres() {
         final List<Genre> newList = List.of(
                 new Genre(1L, "Комедия"),
                 new Genre(2L, "Драма"),
@@ -39,7 +39,7 @@ class GenreDaoImplTest {
     }
 
     @Test
-    void testGetGenreById() {
+    void getGenreById() {
         final Genre newGenre = new Genre(3L, "Мультфильм");
         final GenreDao genreDao = new GenreDaoImpl(jdbcTemplate);
         final Genre savedGenre = genreDao.getGenreById(3L);

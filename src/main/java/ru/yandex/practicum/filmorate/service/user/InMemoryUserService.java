@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.service.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -12,6 +13,7 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Qualifier("inMemoryUserService")
 public class InMemoryUserService implements UserService {
 
     private final UserStorage userStorage;
@@ -59,6 +61,12 @@ public class InMemoryUserService implements UserService {
     public User update(User user) {
         checkUserIdIsPresent(user.getId());
         return userStorage.update(user);
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        checkUserIdIsPresent(id);
+        return userStorage.getUserById(id);
     }
 
     @Override

@@ -20,7 +20,7 @@ class MpaDaoImplTest {
     private final JdbcTemplate jdbcTemplate;
 
     @Test
-    void testGetAllMpa() {
+    void getAllMpa() {
         final List<Mpa> newList = List.of(
                 new Mpa(1L, "G"),
                 new Mpa(2L, "PG"),
@@ -38,7 +38,7 @@ class MpaDaoImplTest {
     }
 
     @Test
-    void testGetMpaById() {
+    void getMpaById() {
         final Mpa newMpa = new Mpa(1L, "G");
         final MpaDao mpaDao = new MpaDaoImpl(jdbcTemplate);
         final Mpa savedMpa = mpaDao.getMpaById(1L);

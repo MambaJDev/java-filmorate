@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.service.mpadao;
+package ru.yandex.practicum.filmorate.service.mpa;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class MpaDaoServiceImpl implements MpaDaoService {
+public class MpaDaoServiceImpl implements MpaService {
 
     private final MpaDao mpaDao;
 

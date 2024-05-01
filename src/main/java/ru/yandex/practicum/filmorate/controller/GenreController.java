@@ -5,15 +5,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.service.genredao.GenreDaoService;
+import ru.yandex.practicum.filmorate.service.genre.GenreService;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-public class GenreDaoController {
+public class GenreController {
 
-    private final GenreDaoService genreService;
+    private final GenreService genreService;
 
     @GetMapping("/genres")
     public List<Genre> getAll() {
