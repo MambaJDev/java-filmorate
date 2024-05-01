@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/films")
 public class FilmController {
+    @Qualifier("filmDbService")
     private final FilmService filmService;
     private static final String DEFAULT_COUNT = "10";
 
@@ -30,13 +32,13 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film update(@RequestBody Film film) {
+    public Film update(@RequestBody @Valid Film film) {
         return filmService.update(film);
     }
 
-    @DeleteMapping
-    public Film delete(@RequestBody Film film) {
-        return filmService.delete(film);
+    @GetMapping("/{id}")
+    public Film getFilmById(@PathVariable Long id) {
+        return filmService.getFilmById(id);
     }
 
     @GetMapping
@@ -44,20 +46,20 @@ public class FilmController {
         return filmService.getAll();
     }
 
-    @PutMapping("/{id}/like/{userId}")
-    public void addLike(@PathVariable(value = "id") Long filmId,
-                        @PathVariable(value = "userId") Long userId) {
-        filmService.addLike(filmId, userId);
-    }
-
-    @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLike(@PathVariable(value = "id") Long filmId,
-                           @PathVariable(value = "userId") Long userId) {
-        filmService.deleteLike(filmId, userId);
-    }
-
     @GetMapping("/popular")
     public List<Film> getPopularFilms(@RequestParam(defaultValue = DEFAULT_COUNT) Integer count) {
         return filmService.getPopularFilms(count);
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    public void addLike(@PathVariable(value = "id") Long filmID,
+                        @PathVariable(value = "userId") Long userID) {
+        filmService.addLike(filmID, userID);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void deleteLike(@PathVariable(value = "id") Long filmID,
+                           @PathVariable(value = "userId") Long userID) {
+        filmService.deleteLike(filmID, userID);
     }
 }

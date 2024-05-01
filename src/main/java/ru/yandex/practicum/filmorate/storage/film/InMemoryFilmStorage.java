@@ -9,10 +9,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
+
     private final Map<Long, Film> films = new HashMap<>();
     private long idGenerator = 1;
 
@@ -55,7 +57,35 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilmById(long id) {
+    public Film getFilmById(Long id) {
         return films.get(id);
+    }
+
+    @Override
+    public List<Film> getPopularFilms(int count) {
+        List<Film> popularFilms = getAll().stream()
+                .sorted((film0, film1) -> film1.getLikes() - film0.getLikes())
+                .limit(count)
+                .collect(Collectors.toList());
+        log.info("Получен список из популярных фильмов, их количество {}", popularFilms.size());
+        return popularFilms;
+    }
+
+    @Override
+    public void addLike(Long filmId, Long userId) {
+        Film film = getFilmById(filmId);
+        if (film.getUserIdLikes().add(userId)) {
+            film.setLikes(film.getLikes() + 1);
+            log.info("User {} успешно поставил лайк фильму {}, количество лайков = {}", userId, filmId, film.getLikes());
+        }
+    }
+
+    @Override
+    public void deleteLike(Long filmId, Long userId) {
+        Film film = getFilmById(filmId);
+        if (film.getUserIdLikes().remove(userId)) {
+            film.setLikes(film.getLikes() - 1);
+            log.info("User успешно удалил лайк, количество лайков = {}", film.getLikes());
+        }
     }
 }
