@@ -35,9 +35,13 @@ public class FilmDbService implements FilmService {
     }
 
     @Override
-    public Film delete(Film film) {
-        log.info("Поступил DELETE-запрос на удаление фильма с ID = {} в базе данных", film.getId());
-        return filmDao.delete(film);
+    public void deleteAllFilms() {
+        filmDao.deleteAllFilms();
+    }
+
+    @Override
+    public void deleteFilmById(Integer id) {
+        filmDao.deleteFilmById(id);
     }
 
     @Override

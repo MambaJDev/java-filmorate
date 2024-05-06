@@ -8,7 +8,9 @@ public interface UserService {
 
     User add(User user);
 
-    User delete(User user);
+    void deleteUserById(Integer id);
+
+    void deleteAllUsers();
 
     User update(User user);
 
