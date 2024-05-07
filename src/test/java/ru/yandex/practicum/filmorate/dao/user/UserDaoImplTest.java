@@ -78,7 +78,7 @@ class UserDaoImplTest {
         final User user1 = userForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
-        userDao.delete(user1);
+        userDao.deleteUserById(Math.toIntExact(user1.getId()));
 
         Assertions.assertThrows(EmptyResultDataAccessException.class,
                 () -> userDao.getUserById(1L));

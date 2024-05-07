@@ -25,10 +25,17 @@ public class UserDbService implements UserService {
     }
 
     @Override
-    public User delete(User user) {
-        log.info("Поступил DELETE-запрос на удаление юзера с ID = {} из базы данных", user.getId());
-        checkUserIdIsPresent(user.getId());
-        return userDao.delete(user);
+    public void deleteAllUsers() {
+        userDao.deleteAllUsers();
+    }
+
+    @Override
+    public void deleteUserById(Integer id) {
+        if (getUserById(Long.valueOf(id)) == null) {
+            log.info("Пользователь " + id + " не найден");
+            throw new NotFoundException("Пользователь не найден");
+        }
+        userDao.deleteUserById(id);
     }
 
     @Override
