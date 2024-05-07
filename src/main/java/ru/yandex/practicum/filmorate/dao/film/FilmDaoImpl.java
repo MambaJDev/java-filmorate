@@ -76,7 +76,7 @@ public class FilmDaoImpl implements FilmDao {
         setFilmGenres(film);
         setFilmDirectors(film);
         log.info("Фильм с ID = {} полностью обновился имя = {}, рейтинг = {}, список жанров = {},  режиссеры = {}",
-                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film),  film.getDirectors());
+                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film), film.getDirectors());
         return film;
     }
 
@@ -95,10 +95,40 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
-        List<Film> films = jdbcTemplate.query("select * from films order by likes desc limit ?", filmRowMapper(), count);
-        log.info("Получен список популярных фильмов. Количество популярных фильмов = {}", films.size());
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
+        List<Film> films;
+        String sql = "select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes from films";
+        if (genreId == null && year == null) {
+            sql = sql + " order by likes desc limit ?";
+            films = jdbcTemplate.query(sql, filmRowMapper(), count);
+            log.info("Получен список популярных фильмов. Количество популярных фильмов = {}", films.size());
+        } else if (genreId != null && year == null) {
+            sql = sql + " join films_genres fg on fg.film_id=films.id where fg.genre_id=? order by likes desc limit ?";
+            films = jdbcTemplate.query(sql, filmRowMapper(), genreId, count);
+            log.info("Получен список популярных фильмов. Количество популярных фильмов = {}", films.size());
+        } else if (genreId == null && year != null) {
+            String yearStart = year + "-01-01";
+            String yearEnd = year + "-12-31";
+            sql = sql + " where release_date between ? and ? order by likes desc limit ?";
+            films = jdbcTemplate.query(sql, filmRowMapper(), yearStart, yearEnd, count);
+            log.info("Получен список популярных фильмов. Количество популярных фильмов = {}", films.size());
+        } else {
+            String yearStart = year + "-01-01";
+            String yearEnd = year + "-12-31";
+            sql = sql + " join films_genres fg on fg.film_id=films.id where (fg.genre_id=? and (release_date between ? and ?)) order by likes desc limit ?";
+            films = jdbcTemplate.query(sql, filmRowMapper(), genreId, yearStart, yearEnd, count);
+            log.info("Получен список популярных фильмов. Количество популярных фильмов = {}", films.size());
+        }
+
         return films;
+    }
+
+
+    public List<Film> getMostPopularByGenre(int limit, int genreId, int year) {
+        String sql = "select select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes " +
+                "from films_genres fg join films on fg.film_id=films.id where fg.genre_id=?";
+        List<Film> films = jdbcTemplate.query(sql, filmRowMapper());
+        return null;
     }
 
     @Override
@@ -202,8 +232,8 @@ public class FilmDaoImpl implements FilmDao {
 
     private void setFilmGenres(Film film) {
         film.setGenres(film.getGenres().stream()
-                        .distinct()
-                        .collect(Collectors.toList()));
+                .distinct()
+                .collect(Collectors.toList()));
         film.getGenres().forEach(genre -> {
             genre.setName(getGenreById(genre.getId()).getName());
             jdbcTemplate.update("insert into films_genres(film_id, genre_id) values (?, ?)",
