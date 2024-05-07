@@ -52,9 +52,14 @@ public class InMemoryUserService implements UserService {
     }
 
     @Override
-    public User delete(User user) {
-        checkUserIdIsPresent(user.getId());
-        return userStorage.delete(user);
+    public void deleteUserById(Integer id) {
+        checkUserIdIsPresent(Long.valueOf(id));
+        userStorage.deleteUserById(id);
+    }
+
+    @Override
+    public void deleteAllUsers() {
+        userStorage.deleteAllUsers();
     }
 
     @Override

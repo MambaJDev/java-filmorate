@@ -50,13 +50,33 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public Film delete(Film film) {
-        String sqlQuery = "delete from films where id = ?";
-        if (jdbcTemplate.update(sqlQuery, film.getId()) == 0) {
-            log.info("Операция обновления данных фильма в БД закончилась неудачей");
+    public void deleteAllFilms() {
+        try {
+            String sql = "delete from films";
+            jdbcTemplate.update(sql);
+            String sql2 = "delete from films_genres";
+            jdbcTemplate.update(sql2);
+            String sql4 = "delete from films_users";
+            jdbcTemplate.update(sql4);
+        } catch (Exception e) {
+            log.error("Ошибка в удалении фильма");
+            throw new NotFoundException("Ошибка в удалении фильма");
         }
-        log.info("Фильм с именем {} и ID {} успешно удален", film.getName(), film.getId());
-        return film;
+    }
+
+    @Override
+    public void deleteFilmById(Integer id) {
+        try {
+            String sql = "delete from films where id = ?";
+            jdbcTemplate.update(sql, id);
+            String sql2 = "delete from films_genres where film_id = ?";
+            jdbcTemplate.update(sql2, id);
+            String sql4 = "delete from films_users where film_id = ?";
+            jdbcTemplate.update(sql4, id);
+        } catch (Exception e) {
+            log.error("Ошибка в удалении фильма по идентификатору");
+            throw new NotFoundException("Ошибка в удалении фильма по идентификатору");
+        }
     }
 
     @Override

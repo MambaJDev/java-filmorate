@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -40,13 +41,33 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User delete(User user) {
-        String sqlQuery = "delete from users where id = ?";
-        if (jdbcTemplate.update(sqlQuery, user.getId()) == 0) {
-            log.info("Операция обновления данных юзера в БД закончилась неудачей");
+    public void deleteUserById(Integer id) {
+        try {
+            String sql = "delete from users where id = ?";
+            jdbcTemplate.update(sql, id);
+            String sql2 = "delete from films_users where user_id = ?";
+            jdbcTemplate.update(sql2, id);
+            String sql3 = "delete from friends where user_id = ?";
+            jdbcTemplate.update(sql3, id);
+        } catch (Exception e) {
+            log.error("Ошибка при удалении пользователя из БД");
+            throw new NotFoundException("Ошибка при удалении пользователя из БД");
         }
-        log.info("Юзер с именем {} и ID {} успешно удален", user.getName(), user.getId());
-        return user;
+    }
+
+    @Override
+    public void deleteAllUsers() {
+        try {
+            String sql = "delete from users";
+            jdbcTemplate.update(sql);
+            String sql2 = "delete from films_users";
+            jdbcTemplate.update(sql2);
+            String sql3 = "delete from friends";
+            jdbcTemplate.update(sql3);
+        } catch (Exception e) {
+            log.error("Ошибка при удалении всех пользователей из БД");
+            throw new NotFoundException("Ошибка при удалении всех пользователей из БД");
+        }
     }
 
     @Override
