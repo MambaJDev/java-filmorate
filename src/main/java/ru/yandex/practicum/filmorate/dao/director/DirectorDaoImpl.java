@@ -53,7 +53,7 @@ public class DirectorDaoImpl implements DirectorDao {
     @Override
     public Director updateDirector(Director director) {
         getDirector(director.getId());
-        jdbcTemplate.update("update users set name = ? where id = ?",
+        jdbcTemplate.update("update directors set name = ? where id = ?",
                 director.getName(),
                 director.getId());
         return director;
