@@ -91,7 +91,7 @@ class FilmDaoImplTest {
         final Film film1 = film1ForTest();
         final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
         filmDao.add(film1);
-        filmDao.delete(film1);
+        filmDao.deleteFilmById(Math.toIntExact(film1.getId()));
         Assertions.assertThrows(EmptyResultDataAccessException.class,
                 () -> filmDao.getFilmById(film1.getId()));
     }
