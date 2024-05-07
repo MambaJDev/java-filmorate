@@ -119,6 +119,19 @@ public class FilmDaoImpl implements FilmDao {
         setLikeIntoDataBase(filmID, film.getLikes());
     }
 
+    @Override
+    public List<Film> getFilmsByDirector(String sortBy, int directorId) {
+        if (sortBy.equals("year")) {
+            sortBy = "release_date";
+        }
+        String sql = "select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes " +
+                "from directors d join film_director fd on d.id=fd.director_id join films on fd.film_id=films.id  where d.id=?" +
+                " order by " + sortBy;
+        List<Film> films = jdbcTemplate.query(sql, filmRowMapper(), directorId);
+        log.info("Получен список фильмов режиссера");
+        return films;
+    }
+
     private void setLikeIntoDataBase(Long filmID, int likeAmount) {
         if (jdbcTemplate.update("update films set likes = ? where id = ?", likeAmount, filmID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");

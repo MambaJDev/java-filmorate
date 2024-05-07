@@ -63,6 +63,14 @@ public class FilmController {
         filmService.deleteLike(filmID, userID);
     }
 
+    @GetMapping("/director/{directorId}")
+    public List<Film> getFilmsByDirector(@RequestParam String sortBy, @PathVariable int directorId) {
+        if (!(sortBy.equals("year") || sortBy.equals("likes"))) {
+            throw new NotFoundException("Неправильно выбран параметр sortBy");
+        }
+        return filmService.getFilmsByDirector(sortBy, directorId);
+    }
+
     @DeleteMapping
     public void deleteAllFilms() {
         filmService.deleteAllFilms();

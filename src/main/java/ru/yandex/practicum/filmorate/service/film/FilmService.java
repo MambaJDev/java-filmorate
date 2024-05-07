@@ -23,4 +23,5 @@ public interface FilmService {
     void addLike(Long filmID, Long userID);
 
     void deleteLike(Long filmID, Long userID);
+    List<Film> getFilmsByDirector(String sortBy, int directorId);
 }

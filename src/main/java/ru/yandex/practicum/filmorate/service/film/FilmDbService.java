@@ -79,6 +79,12 @@ public class FilmDbService implements FilmService {
         filmDao.deleteLike(filmID, userID);
     }
 
+    @Override
+    public List<Film> getFilmsByDirector(String sortBy, int directorId) {
+        log.info("Поступил GET-запрос на получение списка фильмов sortBy={}, directorId={}", sortBy, directorId);
+        return filmDao.getFilmsByDirector(sortBy,directorId);
+    }
+
     private void checkFilmIsPresent(Long id) {
         filmDao.getAll().stream()
                 .filter(user -> user.getId().equals(id))

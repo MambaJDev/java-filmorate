@@ -35,6 +35,11 @@ public class InMemoryFilmService implements FilmService {
     }
 
     @Override
+    public List<Film> getFilmsByDirector(String sortBy, int directorId) {
+        return null;
+    }
+
+    @Override
     public List<Film> getPopularFilms(int count) {
         return filmStorage.getPopularFilms(count);
     }
