@@ -10,7 +10,9 @@ public interface FilmService {
 
     Film update(Film film);
 
-    Film delete(Film film);
+    void deleteFilmById(Integer id);
+
+    void deleteAllFilms();
 
     Film getFilmById(Long id);
 
