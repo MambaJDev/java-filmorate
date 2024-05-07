@@ -2,18 +2,22 @@ package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -72,7 +76,7 @@ public class FilmDaoImpl implements FilmDao {
         setFilmGenres(film);
         setFilmDirectors(film);
         log.info("Фильм с ID = {} полностью обновился имя = {}, рейтинг = {}, список жанров = {},  режиссеры = {}",
-                film.getId(), film.getName(), film.getMpa(), film.getDirectors() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
+                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film),  film.getDirectors());
         return film;
     }
 
@@ -123,6 +127,14 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public List<Film> getFilmsByDirector(String sortBy, int directorId) {
+        try {
+            jdbcTemplate.queryForObject("select * from directors where id=?", (rs, rowNum) -> new Director(
+                    rs.getInt("id"),
+                    rs.getString("name")
+            ), directorId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Режиссер не найден");
+        }
         if (sortBy.equals("year")) {
             sortBy = "release_date";
         }
@@ -168,8 +180,8 @@ public class FilmDaoImpl implements FilmDao {
         return getAllMpa().stream().anyMatch(mpa -> mpa.getId().equals(id));
     }
 
-    private Set<Genre> getGenresByFilmId(Long id) {
-        return new HashSet<>(jdbcTemplate.query("select g.id as genre_id, g.name as genre_name from genres as g " +
+    private List<Genre> getGenresByFilmId(Long id) {
+        return new ArrayList<>(jdbcTemplate.query("select g.id as genre_id, g.name as genre_name from genres as g " +
                         "join films_genres as fg on g.id = fg.genre_id where fg.film_id = ? order by genre_id",
                 (rs, rowNum) -> new Genre(rs.getLong("genre_id"), rs.getString("genre_name")), id));
     }
@@ -189,13 +201,14 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     private void setFilmGenres(Film film) {
-        Set<Genre> genres = film.getGenres();
-        genres.forEach(genre -> {
+        film.setGenres(film.getGenres().stream()
+                        .distinct()
+                        .collect(Collectors.toList()));
+        film.getGenres().forEach(genre -> {
             genre.setName(getGenreById(genre.getId()).getName());
             jdbcTemplate.update("insert into films_genres(film_id, genre_id) values (?, ?)",
                     film.getId(), genre.getId());
         });
-        film.setGenres(genres);
         log.info("Фильму с ID = {} записались жанры = {}", film.getId(), getAllGenresOfFilmToString(film));
     }
 
