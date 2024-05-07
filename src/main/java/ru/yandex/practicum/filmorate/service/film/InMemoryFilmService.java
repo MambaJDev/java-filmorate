@@ -40,7 +40,7 @@ public class InMemoryFilmService implements FilmService {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         return filmStorage.getPopularFilms(count);
     }
 

@@ -139,7 +139,7 @@ class FilmDaoImplTest {
         filmDao.addLike(film2.getId(), user2.getId());
         filmDao.addLike(film1.getId(), user2.getId());
 
-        final List<Film> savedFilmList = filmDao.getPopularFilms(1);
+        final List<Film> savedFilmList = filmDao.getPopularFilms(1, null, null);
 
         assertThat(savedFilmList.size())
                 .isNotNull()

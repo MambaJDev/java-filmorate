@@ -59,9 +59,9 @@ public class FilmDbService implements FilmService {
     }
 
     @Override
-    public List<Film> getPopularFilms(int count) {
+    public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         log.info("Поступил GET-запрос на получение списка популярных фильмов из базы данных, размер списка = {}", count);
-        return filmDao.getPopularFilms(count);
+        return filmDao.getPopularFilms(count, genreId, year);
     }
 
     @Override

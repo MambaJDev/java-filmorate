@@ -18,7 +18,7 @@ public interface FilmService {
 
     List<Film> getAll();
 
-    List<Film> getPopularFilms(int count);
+    List<Film> getPopularFilms(Integer count, Integer genreId, Integer year);
 
     void addLike(Long filmID, Long userID);
 
