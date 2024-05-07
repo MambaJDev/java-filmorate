@@ -67,6 +67,7 @@ public class FilmDaoImpl implements FilmDao {
             log.info("Операция обновления данных фильма в БД закончилась неудачей");
         }
         jdbcTemplate.update("delete from film_director where film_id=?", film.getId());
+        jdbcTemplate.update("delete from films_genres where film_id=?", film.getId());
         setFilmMpa(film);
         setFilmGenres(film);
         setFilmDirectors(film);
