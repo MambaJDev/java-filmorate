@@ -8,7 +8,9 @@ import ru.yandex.practicum.filmorate.annotation.NotReleaseDateBefore1895;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -25,7 +27,8 @@ public class Film {
     @Min(1)
     private Long duration;
     private Mpa mpa;
-    private Set<Genre> genres = new HashSet<>();
+    private List<Genre> genres = new ArrayList<>();
     private Set<Long> userIdLikes = new HashSet<>();
     private int likes = 0;
+    private Set<Director> directors = new HashSet<>();
 }

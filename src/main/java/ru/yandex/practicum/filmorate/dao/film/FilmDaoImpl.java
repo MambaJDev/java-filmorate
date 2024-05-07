@@ -2,17 +2,22 @@ package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -37,9 +42,10 @@ public class FilmDaoImpl implements FilmDao {
         }
         setFilmMpa(film);
         setFilmGenres(film);
+        setFilmDirectors(film);
 
-        log.info("Фильм с ID = {} полностью добавился имя = {}, реитенг = {}, списк жаннров = {}",
-                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
+        log.info("Фильм с ID = {} полностью добавился имя = {}, реитенг = {}, списк жаннров = {}, режиссеры = {}",
+                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film), film.getDirectors());
         return film;
     }
 
@@ -64,10 +70,13 @@ public class FilmDaoImpl implements FilmDao {
                 film.getId()) == 0) {
             log.info("Операция обновления данных фильма в БД закончилась неудачей");
         }
+        jdbcTemplate.update("delete from film_director where film_id=?", film.getId());
+        jdbcTemplate.update("delete from films_genres where film_id=?", film.getId());
         setFilmMpa(film);
         setFilmGenres(film);
-        log.info("Фильм с ID = {} полностью обновился имя = {}, реитенг = {}, списк жаннров = {}",
-                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
+        setFilmDirectors(film);
+        log.info("Фильм с ID = {} полностью обновился имя = {}, рейтинг = {}, список жанров = {},  режиссеры = {}",
+                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film),  film.getDirectors());
         return film;
     }
 
@@ -116,6 +125,27 @@ public class FilmDaoImpl implements FilmDao {
         setLikeIntoDataBase(filmID, film.getLikes());
     }
 
+    @Override
+    public List<Film> getFilmsByDirector(String sortBy, int directorId) {
+        try {
+            jdbcTemplate.queryForObject("select * from directors where id=?", (rs, rowNum) -> new Director(
+                    rs.getInt("id"),
+                    rs.getString("name")
+            ), directorId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Режиссер не найден");
+        }
+        if (sortBy.equals("year")) {
+            sortBy = "release_date";
+        }
+        String sql = "select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes " +
+                "from directors d join film_director fd on d.id=fd.director_id join films on fd.film_id=films.id  where d.id=?" +
+                " order by " + sortBy;
+        List<Film> films = jdbcTemplate.query(sql, filmRowMapper(), directorId);
+        log.info("Получен список фильмов режиссера");
+        return films;
+    }
+
     private void setLikeIntoDataBase(Long filmID, int likeAmount) {
         if (jdbcTemplate.update("update films set likes = ? where id = ?", likeAmount, filmID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
@@ -140,6 +170,8 @@ public class FilmDaoImpl implements FilmDao {
             getGenresByFilmId(rs.getLong("id"));
             film.setGenres(getGenresByFilmId(rs.getLong("id")));
             log.info(" В фильм с ID = {} записался список жанров ", film.getId());
+            film.setDirectors(getDirectorsByFilmId(film.getId()));
+            log.info(" В фильм с ID = {} записался список режиссеров ", film.getId());
             return film;
         });
     }
@@ -148,10 +180,16 @@ public class FilmDaoImpl implements FilmDao {
         return getAllMpa().stream().anyMatch(mpa -> mpa.getId().equals(id));
     }
 
-    private Set<Genre> getGenresByFilmId(Long id) {
-        return new HashSet<>(jdbcTemplate.query("select g.id as genre_id, g.name as genre_name from genres as g " +
+    private List<Genre> getGenresByFilmId(Long id) {
+        return new ArrayList<>(jdbcTemplate.query("select g.id as genre_id, g.name as genre_name from genres as g " +
                         "join films_genres as fg on g.id = fg.genre_id where fg.film_id = ? order by genre_id",
                 (rs, rowNum) -> new Genre(rs.getLong("genre_id"), rs.getString("genre_name")), id));
+    }
+
+    private Set<Director> getDirectorsByFilmId(Long id) {
+        return new HashSet<>(jdbcTemplate.query("select d.id as director_id, d.name as director_name from directors as d " +
+                        "join film_director as fd on d.id = fd.director_id where fd.film_id = ? order by director_id",
+                (rs, rowNum) -> new Director(rs.getInt("director_id"), rs.getString("director_name")), id));
     }
 
     private void setFilmMpa(Film film) {
@@ -163,14 +201,30 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     private void setFilmGenres(Film film) {
-        Set<Genre> genres = film.getGenres();
-        genres.forEach(genre -> {
+        film.setGenres(film.getGenres().stream()
+                        .distinct()
+                        .collect(Collectors.toList()));
+        film.getGenres().forEach(genre -> {
             genre.setName(getGenreById(genre.getId()).getName());
             jdbcTemplate.update("insert into films_genres(film_id, genre_id) values (?, ?)",
                     film.getId(), genre.getId());
         });
-        film.setGenres(genres);
         log.info("Фильму с ID = {} записались жанры = {}", film.getId(), getAllGenresOfFilmToString(film));
+    }
+
+    private void setFilmDirectors(Film film) {
+
+        Set<Director> directors = film.getDirectors();
+        directors.forEach(director -> {
+            director.setName(jdbcTemplate.queryForObject("select name from directors where id = ?", (rs, rowNum) ->
+                    rs.getString("name"), director.getId()
+            ));
+
+            jdbcTemplate.update("insert into film_director(film_id, director_id) values (?, ?)",
+                    film.getId(), director.getId());
+        });
+        film.setDirectors(directors);
+        log.info("Фильму с ID = {} записались режиссеры = {}", film.getId(), film.getDirectors());
     }
 
     private String getAllGenresOfFilmToString(Film film) {
