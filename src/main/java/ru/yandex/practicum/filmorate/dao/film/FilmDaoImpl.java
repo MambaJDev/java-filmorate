@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
@@ -37,9 +38,10 @@ public class FilmDaoImpl implements FilmDao {
         }
         setFilmMpa(film);
         setFilmGenres(film);
+        setFilmDirectors(film);
 
-        log.info("Фильм с ID = {} полностью добавился имя = {}, реитенг = {}, списк жаннров = {}",
-                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
+        log.info("Фильм с ID = {} полностью добавился имя = {}, реитенг = {}, списк жаннров = {}, режиссеры = {}",
+                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film), film.getDirectors());
         return film;
     }
 
@@ -66,8 +68,9 @@ public class FilmDaoImpl implements FilmDao {
         }
         setFilmMpa(film);
         setFilmGenres(film);
-        log.info("Фильм с ID = {} полностью обновился имя = {}, реитенг = {}, списк жаннров = {}",
-                film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
+        setFilmDirectors(film);
+        log.info("Фильм с ID = {} полностью обновился имя = {}, рейтинг = {}, список жанров = {},  режиссеры = {}",
+                film.getId(), film.getName(), film.getMpa(), film.getDirectors() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film));
         return film;
     }
 
@@ -140,6 +143,8 @@ public class FilmDaoImpl implements FilmDao {
             getGenresByFilmId(rs.getLong("id"));
             film.setGenres(getGenresByFilmId(rs.getLong("id")));
             log.info(" В фильм с ID = {} записался список жанров ", film.getId());
+            film.setDirectors(getDirectorsByFilmId(film.getId()));
+            log.info(" В фильм с ID = {} записался список режиссеров ", film.getId());
             return film;
         });
     }
@@ -152,6 +157,12 @@ public class FilmDaoImpl implements FilmDao {
         return new HashSet<>(jdbcTemplate.query("select g.id as genre_id, g.name as genre_name from genres as g " +
                         "join films_genres as fg on g.id = fg.genre_id where fg.film_id = ? order by genre_id",
                 (rs, rowNum) -> new Genre(rs.getLong("genre_id"), rs.getString("genre_name")), id));
+    }
+
+    private Set<Director> getDirectorsByFilmId(Long id) {
+        return new HashSet<>(jdbcTemplate.query("select d.id as director_id, d.name as director_name from directors as d " +
+                        "join film_director as fd on d.id = fd.director_id where fd.film_id = ? order by director_id",
+                (rs, rowNum) -> new Director(rs.getInt("director_id"), rs.getString("director_name")), id));
     }
 
     private void setFilmMpa(Film film) {
@@ -171,6 +182,21 @@ public class FilmDaoImpl implements FilmDao {
         });
         film.setGenres(genres);
         log.info("Фильму с ID = {} записались жанры = {}", film.getId(), getAllGenresOfFilmToString(film));
+    }
+
+    private void setFilmDirectors(Film film) {
+
+        Set<Director> directors = film.getDirectors();
+        directors.forEach(director -> {
+            director.setName(jdbcTemplate.queryForObject("select name from directors where id = ?", (rs, rowNum) ->
+                    rs.getString("name"), director.getId()
+            ));
+
+            jdbcTemplate.update("insert into film_director(film_id, director_id) values (?, ?)",
+                    film.getId(), director.getId());
+        });
+        film.setDirectors(directors);
+        log.info("Фильму с ID = {} записались режиссеры = {}", film.getId(), film.getDirectors());
     }
 
     private String getAllGenresOfFilmToString(Film film) {
