@@ -19,7 +19,7 @@ import java.util.Map;
 @Slf4j
 public class DirectorDaoImpl implements DirectorDao {
 
-    private JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public List<Director> getDirectors() {
