@@ -25,4 +25,6 @@ public interface FilmService {
     void deleteLike(Long filmID, Long userID);
 
     List<Film> getFilmsByDirector(String sortBy, int directorId);
+
+    List<Film> getFilmsByParams(String query, String by);
 }

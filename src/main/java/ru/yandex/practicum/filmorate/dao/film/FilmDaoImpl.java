@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -143,7 +144,6 @@ public class FilmDaoImpl implements FilmDao {
         return films;
     }
 
-
     public List<Film> getMostPopularByGenre(int limit, int genreId, int year) {
         String sql = "select select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes " +
                 "from films_genres fg join films on fg.film_id=films.id where fg.genre_id=?";
@@ -194,6 +194,27 @@ public class FilmDaoImpl implements FilmDao {
         List<Film> films = jdbcTemplate.query(sql, filmRowMapper(), directorId);
         log.info("Получен список фильмов режиссера");
         return films;
+    }
+
+    @Override
+    public List<Film> getFilmsByParams(String query, String by) {
+        switch (by) {
+            case "director": {
+                String sql = "select * from films where id in (select film_id from film_director where director_id in " +
+                        "(select id from directors where name ilike ?)) order by likes desc";
+                return jdbcTemplate.query(sql, filmRowMapper(), "%" + query + "%");
+            }
+            case "title": {
+                String sql = "select * from films where name ilike ? order by likes desc";
+                return jdbcTemplate.query(sql, filmRowMapper(), "%" + query + "%");
+            }
+            case "director,title": {
+                String sql = "select * from films as f join film_director as fd on f.id=fd.film_id " +
+                        "join directors as d on fd.director_id=d.id where d.name ilike ? or f.name ilike ? order by f.likes desc";
+                return jdbcTemplate.query(sql, filmRowMapper(), "%" + query + "%", "%" + query + "%");
+            }
+        }
+        return Collections.emptyList();
     }
 
     private void setLikeIntoDataBase(Long filmID, int likeAmount) {
