@@ -95,6 +95,11 @@ public class FilmDbService implements FilmService {
         return filmDao.getFilmsByParams(query, by);
     }
 
+    @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return filmDao.getCommonFilms(userId, friendId);
+    }
+
     private void checkFilmIsPresent(Long id) {
         filmDao.getAll().stream()
                 .filter(user -> user.getId().equals(id))

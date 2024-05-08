@@ -9,7 +9,6 @@ import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 
-
 @Data
 @Accessors(chain = true)
 public class User {

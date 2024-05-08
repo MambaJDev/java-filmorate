@@ -54,7 +54,8 @@ class FilmDaoImplTest {
     void addFilmToDatabase() {
         final Film film1 = film1ForTest();
         final Film film2 = film2ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         filmDao.add(film2);
         final List<Film> savedList = filmDao.getAll();
@@ -68,7 +69,8 @@ class FilmDaoImplTest {
     @Test
     void updateFilm() {
         final Film film1 = film1ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         filmDao.update(new Film()
                 .setId(1L)
@@ -89,7 +91,8 @@ class FilmDaoImplTest {
     @Test
     void deleteFilm() {
         final Film film1 = film1ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         filmDao.deleteFilmById(Math.toIntExact(film1.getId()));
         Assertions.assertThrows(EmptyResultDataAccessException.class,
@@ -99,7 +102,8 @@ class FilmDaoImplTest {
     @Test
     void getFilmById() {
         final Film film1 = film1ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         final Film savedFilm = filmDao.getFilmById(1L);
 
@@ -112,7 +116,8 @@ class FilmDaoImplTest {
     @Test
     void getAllFilms() {
         final Film film1 = film1ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         final List<Film> newFilmList = List.of(film1);
         final List<Film> savedFilmList = filmDao.getAll();
@@ -127,12 +132,12 @@ class FilmDaoImplTest {
     void getPopularFilms() {
         final Film film1 = film1ForTest();
         final Film film2 = film2ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         filmDao.add(film2);
         final User user1 = new User().setId(2L).setLogin("King").setEmail("hello@google.com");
         final User user2 = new User().setId(3L).setLogin("Ken").setEmail("he@google.com");
-        final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
         userDao.add(user2);
         filmDao.addLike(film2.getId(), user1.getId());
@@ -155,10 +160,10 @@ class FilmDaoImplTest {
     @Test
     void addLikeToFilm() {
         final Film film1 = film1ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         final User user1 = new User().setLogin("King").setEmail("hello@google.com");
-        final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
         filmDao.addLike(film1.getId(), user1.getId());
         int likes = filmDao.getFilmById(film1.getId()).getLikes();
@@ -172,10 +177,10 @@ class FilmDaoImplTest {
     @Test
     void deleteLikeFromFilm() {
         final Film film1 = film1ForTest();
-        final FilmDao filmDao = new FilmDaoImpl(jdbcTemplate);
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         final User user1 = new User().setLogin("King").setEmail("hello@google.com");
-        final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
         filmDao.addLike(film1.getId(), user1.getId());
         filmDao.deleteLike(film1.getId(), user1.getId());

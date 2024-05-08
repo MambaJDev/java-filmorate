@@ -7,17 +7,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -25,6 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FilmDaoImpl implements FilmDao {
     private final JdbcTemplate jdbcTemplate;
+    private final UserDao userDao;
 
     @Override
     public Film add(Film film) {
@@ -45,7 +43,7 @@ public class FilmDaoImpl implements FilmDao {
         setFilmGenres(film);
         setFilmDirectors(film);
 
-        log.info("Фильм с ID = {} полностью добавился имя = {}, реитенг = {}, списк жаннров = {}, режиссеры = {}",
+        log.info("Фильм с ID = {} полностью добавился имя = {}, рейтинг = {}, список жанров = {}, режиссеры = {}",
                 film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film), film.getDirectors());
         return film;
     }
@@ -144,6 +142,7 @@ public class FilmDaoImpl implements FilmDao {
         return films;
     }
 
+
     public List<Film> getMostPopularByGenre(int limit, int genreId, int year) {
         String sql = "select select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes " +
                 "from films_genres fg join films on fg.film_id=films.id where fg.genre_id=?";
@@ -160,6 +159,7 @@ public class FilmDaoImpl implements FilmDao {
         film.getUserIdLikes().add(userID);
         film.setLikes(film.getLikes() + 1);
         setLikeIntoDataBase(filmID, film.getLikes());
+
     }
 
     @Override
@@ -197,6 +197,7 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
+
     public List<Film> getFilmsByParams(String query, String by) {
         log.info("Получен список фильмов по параметрам");
         String sqlQueryByTitle = "select * from films where name ilike ? order by likes desc";
@@ -216,11 +217,27 @@ public class FilmDaoImpl implements FilmDao {
         } else return Collections.emptyList();
     }
 
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        userDao.getUserById(userId);
+        userDao.getUserById(friendId);
+        return jdbcTemplate.query("select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes from films join (SELECT film_id FROM films_users WHERE user_id = ? OR user_id = ? " +
+                        "GROUP BY film_id HAVING COUNT(DISTINCT user_id) = 2) as common on common.film_id=films.id", filmRowMapper(),
+                userId, friendId);
+
+
+    }
+
     private void setLikeIntoDataBase(Long filmID, int likeAmount) {
         if (jdbcTemplate.update("update films set likes = ? where id = ?", likeAmount, filmID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
         log.info("Лайк успешно обновлен. Фильм с ID = {} количество лайков {}", filmID, likeAmount);
+    }
+
+    private void setFilmLikes(Film film) {
+        List<Long> likesList = jdbcTemplate.query("select user_id from films_users where film_id = ?",
+                (rs, rowNum) -> rs.getLong("user_id"), film.getId());
+        film.setUserIdLikes(new HashSet<>(likesList));
     }
 
     private RowMapper<Film> filmRowMapper() {
@@ -235,9 +252,9 @@ public class FilmDaoImpl implements FilmDao {
 
             if (checkMpaIsPresent(rs.getLong("mpa_id"))) {
                 film.setMpa(getMpaById(rs.getLong("mpa_id")));
-
             }
             getGenresByFilmId(rs.getLong("id"));
+            setFilmLikes(film);
             film.setGenres(getGenresByFilmId(rs.getLong("id")));
             log.info(" В фильм с ID = {} записался список жанров ", film.getId());
             film.setDirectors(getDirectorsByFilmId(film.getId()));
