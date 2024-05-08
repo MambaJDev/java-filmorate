@@ -80,6 +80,7 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public Film update(Film film) {
+        getFilmById(film.getId());
         String sqlQuery = "update films set name = ?, description = ?, release_date = ?, duration = ? where id = ?";
         if (jdbcTemplate.update(sqlQuery,
                 film.getName(),
@@ -101,9 +102,11 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public Film getFilmById(Long id) {
-        Film film = jdbcTemplate.queryForObject("select * from films where id = ?", filmRowMapper(), id);
-        log.info("Фильм успешно получен по ID = {}", id);
-        return film;
+        try {
+            return jdbcTemplate.queryForObject("select * from films where id = ?", filmRowMapper(), id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Фильм не найден");
+        }
     }
 
     @Override
@@ -144,6 +147,8 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public void addLike(Long filmID, Long userID) {
+        getFilmById(filmID);
+        userDao.getUserById(userID);
         if (jdbcTemplate.update("insert into films_users(film_id, user_id) values (?, ?)", filmID, userID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
@@ -151,11 +156,12 @@ public class FilmDaoImpl implements FilmDao {
         film.getUserIdLikes().add(userID);
         film.setLikes(film.getLikes() + 1);
         setLikeIntoDataBase(filmID, film.getLikes());
-
     }
 
     @Override
     public void deleteLike(Long filmID, Long userID) {
+        getFilmById(filmID);
+        userDao.getUserById(userID);
         if (jdbcTemplate.update("delete from films_users where film_id = ? and user_id = ?", filmID, userID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
