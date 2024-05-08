@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dao.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -72,6 +73,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User update(User user) {
+        getUserById(user.getId());
         String sqlQuery = "update users set name = ?, email = ?, login = ?, birthday = ?  where id = ?";
         if (jdbcTemplate.update(sqlQuery,
                 user.getName(),
@@ -94,14 +96,19 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User getUserById(Long id) {
-        User user = jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper(), id);
-        log.info("Юзер успешно получен по ID = {}", id);
-        return user;
+        try {
+            User user = jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper(), id);
+            log.info("Юзер успешно получен по ID = {}", id);
+            return user;
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Пользователь не найден");
+        }
     }
 
     @Override
     public User addFriend(Long userId, Long friendId) {
         User user = getUserById(userId);
+        getUserById(friendId);
         user.getFriends().add(friendId);
         if (jdbcTemplate.update("insert into friends (user_id, friend_id) values (?, ?);", userId, friendId) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
@@ -112,6 +119,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> getAllFriends(Long id) {
+        getUserById(id);
         List<User> users = jdbcTemplate.query("select * from users where id in (select friend_id " +
                 "from friends where user_id = ?)", userRowMapper(), id);
         log.info("Список друзей юзера {} получен из БД, размер списка = {}", id, users.size());
@@ -132,6 +140,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void deleteFriend(Long userId, Long friendId) {
         User user = getUserById(userId);
+        getUserById(friendId);
         user.getFriends().remove(friendId);
         if (jdbcTemplate.update("delete from friends where user_id = ? and friend_id = ?", userId, friendId) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");

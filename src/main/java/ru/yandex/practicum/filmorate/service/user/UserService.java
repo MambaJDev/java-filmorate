@@ -25,6 +25,4 @@ public interface UserService {
     List<User> getAllFriends(Long id);
 
     List<User> getCommonFriends(Long userID, Long otherID);
-
-    void checkUserIdIsPresent(Long id);
 }

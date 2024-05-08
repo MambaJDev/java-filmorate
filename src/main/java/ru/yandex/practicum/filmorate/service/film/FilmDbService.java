@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.film.FilmDao;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.user.UserService;
 
 import java.util.List;
 
@@ -18,8 +16,6 @@ import java.util.List;
 public class FilmDbService implements FilmService {
 
     private final FilmDao filmDao;
-    @Qualifier("userDbService")
-    private final UserService userService;
 
     @Override
     public Film add(Film film) {
@@ -30,7 +26,6 @@ public class FilmDbService implements FilmService {
     @Override
     public Film update(Film film) {
         log.info("Поступил PUT-запрос на обновление фильма с ID = {} в базе данных", film.getId());
-        checkFilmIsPresent(film.getId());
         return filmDao.update(film);
     }
 
@@ -48,7 +43,6 @@ public class FilmDbService implements FilmService {
     @Override
     public Film getFilmById(Long id) {
         log.info("Поступил GET-запрос на получение фильма с ID = {} из базы данных", id);
-        checkFilmIsPresent(id);
         return filmDao.getFilmById(id);
     }
 
@@ -67,16 +61,12 @@ public class FilmDbService implements FilmService {
     @Override
     public void addLike(Long filmID, Long userID) {
         log.info("Поступил PUT-запрос на добавление лайка фильму {} юзером {}", filmID, userID);
-        checkFilmIsPresent(filmID);
-        userService.checkUserIdIsPresent(userID);
         filmDao.addLike(filmID, userID);
     }
 
     @Override
     public void deleteLike(Long filmID, Long userID) {
         log.info("Поступил DELETE-запрос на удаление лайка у фильма {} юзером {}", filmID, userID);
-        checkFilmIsPresent(filmID);
-        userService.checkUserIdIsPresent(userID);
         filmDao.deleteLike(filmID, userID);
     }
 
@@ -100,9 +90,4 @@ public class FilmDbService implements FilmService {
         return filmDao.getCommonFilms(userId, friendId);
     }
 
-    private void checkFilmIsPresent(Long id) {
-        filmDao.getAll().stream()
-                .filter(user -> user.getId().equals(id))
-                .findFirst().orElseThrow(() -> new NotFoundException("Фильм с таким ID не существует"));
-    }
 }
