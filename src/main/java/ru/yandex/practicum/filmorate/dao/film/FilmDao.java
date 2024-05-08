@@ -25,4 +25,6 @@ public interface FilmDao {
     void deleteLike(Long filmId, Long userId);
 
     List<Film> getFilmsByDirector(String sortBy, int directorId);
+
+    List<Film> getCommonFilms(Long userId, Long friendId);
 }
