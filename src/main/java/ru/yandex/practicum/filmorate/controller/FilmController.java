@@ -76,6 +76,12 @@ public class FilmController {
         filmService.deleteFilmById(id);
     }
 
+    @GetMapping("/search")
+    public List<Film> getFilmsByParams(@RequestParam(required = false) String query,
+                                       @RequestParam(required = false) String by) {
+        return filmService.getFilmsByParams(query, by);
+    }
+
     @GetMapping("/common")
     public List<Film> getCommonFilms(@RequestParam Long userId, @RequestParam Long friendId) {
         return filmService.getCommonFilms(userId, friendId);

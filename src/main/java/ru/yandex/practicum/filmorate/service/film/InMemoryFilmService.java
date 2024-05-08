@@ -50,6 +50,11 @@ public class InMemoryFilmService implements FilmService {
     }
 
     @Override
+    public List<Film> getFilmsByParams(String query, String by) {
+        return null;
+    }
+
+    @Override
     public Film add(Film film) {
         return filmStorage.add(film);
     }
