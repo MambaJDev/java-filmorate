@@ -6,9 +6,6 @@ import javax.validation.constraints.NotBlank;
 
 
 @AllArgsConstructor
-@Getter
-@Setter
-@EqualsAndHashCode
 @Data
 public class Genre {
     private Long id;

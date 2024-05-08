@@ -1,14 +1,12 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
 
 @AllArgsConstructor
-@Getter
-@Setter
+@Data
 public class Mpa {
     private Long id;
     @NotBlank

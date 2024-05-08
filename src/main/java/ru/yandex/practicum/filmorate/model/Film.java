@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.validator.constraints.Length;
 import ru.yandex.practicum.filmorate.annotation.NotReleaseDateBefore1895;
@@ -13,8 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
 @Accessors(chain = true)
 public class Film {
     private Long id;

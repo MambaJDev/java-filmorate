@@ -40,6 +40,11 @@ public class InMemoryFilmService implements FilmService {
     }
 
     @Override
+    public List<Film> getCommonFilms(Long userId, Long friendId) {
+        return null;
+    }
+
+    @Override
     public List<Film> getPopularFilms(Integer count, Integer genreId, Integer year) {
         return filmStorage.getPopularFilms(count);
     }
