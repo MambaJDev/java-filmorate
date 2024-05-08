@@ -198,23 +198,22 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public List<Film> getFilmsByParams(String query, String by) {
-        switch (by) {
-            case "director": {
-                String sql = "select * from films where id in (select film_id from film_director where director_id in " +
-                        "(select id from directors where name ilike ?)) order by likes desc";
-                return jdbcTemplate.query(sql, filmRowMapper(), "%" + query + "%");
-            }
-            case "title": {
-                String sql = "select * from films where name ilike ? order by likes desc";
-                return jdbcTemplate.query(sql, filmRowMapper(), "%" + query + "%");
-            }
-            case "director,title": {
-                String sql = "select * from films as f join film_director as fd on f.id=fd.film_id " +
-                        "join directors as d on fd.director_id=d.id where d.name ilike ? or f.name ilike ? order by f.likes desc";
-                return jdbcTemplate.query(sql, filmRowMapper(), "%" + query + "%", "%" + query + "%");
-            }
-        }
-        return Collections.emptyList();
+        log.info("Получен список фильмов по параметрам");
+        String sqlQueryByTitle = "select * from films where name ilike ? order by likes desc";
+        String sqlQueryByDirector = "select * from films where id in (select film_id from film_director where director_id in " +
+                "(select id from directors where name ilike ?)) order by likes desc";
+        if (by.equals("director")) {
+            return jdbcTemplate.query(sqlQueryByDirector, filmRowMapper(), "%" + query + "%");
+        } else if (by.equals("title")) {
+            return jdbcTemplate.query(sqlQueryByTitle, filmRowMapper(), "%" + query + "%");
+        } else if (by.equals("director,title") || by.equals("title,director")) {
+            List<Film> filmsByTitle = jdbcTemplate.query(sqlQueryByTitle, filmRowMapper(), "%" + query + "%");
+            List<Film> filmsByDirector = jdbcTemplate.query(sqlQueryByDirector, filmRowMapper(), "%" + query + "%");
+            Set<Film> unionSet = new HashSet<>();
+            unionSet.addAll(filmsByTitle);
+            unionSet.addAll(filmsByDirector);
+            return unionSet.stream().collect(Collectors.toList());
+        } else return Collections.emptyList();
     }
 
     private void setLikeIntoDataBase(Long filmID, int likeAmount) {

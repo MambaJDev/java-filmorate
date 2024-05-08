@@ -88,7 +88,7 @@ public class FilmDbService implements FilmService {
 
     @Override
     public List<Film> getFilmsByParams(String query, String by) {
-        if (!(by.equals("director") || by.equals("title") || by.equals("director,title"))) {
+        if (!(by.equals("director") || by.equals("title") || by.equals("director,title") || by.equals("title,director"))) {
             throw new NotFoundException("Неправильно выбран параметр 'by'");
         }
         log.info("Поступил GET-запрос на получение списка фильмов по параметрам query={}, by={}", query, by);
