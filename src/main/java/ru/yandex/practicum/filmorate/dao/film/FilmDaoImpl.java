@@ -142,14 +142,6 @@ public class FilmDaoImpl implements FilmDao {
         return films;
     }
 
-
-    public List<Film> getMostPopularByGenre(int limit, int genreId, int year) {
-        String sql = "select select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes " +
-                "from films_genres fg join films on fg.film_id=films.id where fg.genre_id=?";
-        List<Film> films = jdbcTemplate.query(sql, filmRowMapper());
-        return null;
-    }
-
     @Override
     public void addLike(Long filmID, Long userID) {
         if (jdbcTemplate.update("insert into films_users(film_id, user_id) values (?, ?)", filmID, userID) == 0) {
@@ -197,7 +189,6 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-
     public List<Film> getFilmsByParams(String query, String by) {
         log.info("Получен список фильмов по параметрам");
         String sqlQueryByTitle = "select * from films where name ilike ? order by likes desc";
