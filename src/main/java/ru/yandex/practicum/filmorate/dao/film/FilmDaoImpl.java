@@ -9,12 +9,12 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -195,12 +195,32 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
+    public List<Film> getFilmsByParams(String query, String by) {
+        log.info("Получен список фильмов по параметрам");
+        String sqlQueryByTitle = "select * from films where name ilike ? order by likes desc";
+        String sqlQueryByDirector = "select * from films where id in (select film_id from film_director where director_id in " +
+                "(select id from directors where name ilike ?)) order by likes desc";
+        if (by.equals("director")) {
+            return jdbcTemplate.query(sqlQueryByDirector, filmRowMapper(), "%" + query + "%");
+        } else if (by.equals("title")) {
+            return jdbcTemplate.query(sqlQueryByTitle, filmRowMapper(), "%" + query + "%");
+        } else if (by.equals("director,title") || by.equals("title,director")) {
+            List<Film> filmsByTitle = jdbcTemplate.query(sqlQueryByTitle, filmRowMapper(), "%" + query + "%");
+            List<Film> filmsByDirector = jdbcTemplate.query(sqlQueryByDirector, filmRowMapper(), "%" + query + "%");
+            Set<Film> unionSet = new HashSet<>();
+            unionSet.addAll(filmsByTitle);
+            unionSet.addAll(filmsByDirector);
+            return unionSet.stream().collect(Collectors.toList());
+        } else return Collections.emptyList();
+    }
+
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         userDao.getUserById(userId);
         userDao.getUserById(friendId);
         return jdbcTemplate.query("select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes from films join (SELECT film_id FROM films_users WHERE user_id = ? OR user_id = ? " +
                         "GROUP BY film_id HAVING COUNT(DISTINCT user_id) = 2) as common on common.film_id=films.id", filmRowMapper(),
                 userId, friendId);
+
 
     }
 

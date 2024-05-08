@@ -19,7 +19,7 @@ public class GenreDBService implements GenreService {
     @Override
     public List<Genre> getAllGenres() {
         log.info("Поступил GET-запрос на получение всех жанров из базы данных");
-       return genreDao.getAllGenres();
+        return genreDao.getAllGenres();
     }
 
     @Override
