@@ -9,7 +9,10 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,7 +44,11 @@ public class FilmDaoImpl implements FilmDao {
         }
         setFilmMpa(film);
         setFilmGenres(film);
-        setFilmDirectors(film);
+        try {
+            setFilmDirectors(film);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Режиссер не найден");
+        }
 
         log.info("Фильм с ID = {} полностью добавился имя = {}, рейтинг = {}, список жанров = {}, режиссеры = {}",
                 film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film), film.getDirectors());
