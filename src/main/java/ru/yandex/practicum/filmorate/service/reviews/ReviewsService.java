@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service.reviews;
 
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.reviews.ReviewsDao;
 import ru.yandex.practicum.filmorate.dao.reviews.ReviewsLikeDao;
@@ -8,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class ReviewsService {
 
     ReviewsDao reviewsDao;
