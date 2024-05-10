@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.dao.user;
 
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
@@ -19,11 +18,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @JdbcTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Disabled
 class UserDaoImplTest {
     private final JdbcTemplate jdbcTemplate;
 
-    private User userForTest() {
+    private User user1ForTest() {
         return new User()
                 .setId(1L)
                 .setEmail("user@email.ru")
@@ -32,50 +30,53 @@ class UserDaoImplTest {
                 .setBirthday("1990-01-01");
     }
 
-    @Test
-    void getUserById() {
-        final User user1 = userForTest();
-        final UserDao userDao = new UserDaoImpl(jdbcTemplate);
-        userDao.add(user1);
+    private User user2ForTest() {
+        return new User()
+                .setId(2L)
+                .setEmail("user2@email.ru")
+                .setName("Name2")
+                .setLogin("login2")
+                .setBirthday("2000-01-01");
+    }
 
-        final User savedUser = userDao.getUserById(1L);
-
-        assertThat(savedUser)
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(user1);
+    private User user3ForTest() {
+        return new User()
+                .setId(3L)
+                .setEmail("user3@email.ru")
+                .setName("Name3")
+                .setLogin("login3")
+                .setBirthday("2003-01-01");
     }
 
     @Test
-    void addUserToDatabase() {
-        final User user = userForTest();
+    void addAndGetUser() {
+        final User user = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user);
 
-        final List<User> savedList = userDao.getAll();
-
-        assertThat(savedList.size())
+        assertThat(userDao.getUserById(1L))
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(1);
+                .isEqualTo(user);
     }
 
     @Test
     void updateUser() {
-        final User user1 = userForTest();
-        final UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        User user1 = user1ForTest();
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
-        userDao.update(new User().setId(1L).setLogin("Dima").setEmail("mamba84@mail.ru"));
-        final User savedUser = userDao.getUserById(1L);
 
-        assertThat(savedUser.getLogin())
+        User user2 = user2ForTest().setId(1L);
+        userDao.update(user2);
+
+        assertThat(userDao.getUserById(1L))
                 .usingDefaultComparator()
-                .isEqualTo("Dima");
+                .isEqualTo(user2);
     }
 
     @Test
     void deleteUser() {
-        final User user1 = userForTest();
+        final User user1 = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
         userDao.deleteUserById(Math.toIntExact(user1.getId()));
@@ -86,7 +87,7 @@ class UserDaoImplTest {
 
     @Test
     void getAllUsers() {
-        final User newUser = userForTest();
+        final User newUser = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(newUser);
 
@@ -101,10 +102,10 @@ class UserDaoImplTest {
 
     @Test
     void addFriend() {
-        final User user1 = userForTest();
+        final User user1 = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
-        final User user2 = new User().setId(2L).setLogin("King").setEmail("hello@google.com");
+        final User user2 = user2ForTest();
         userDao.add(user2);
 
         userDao.addFriend(1L, 2L);
@@ -121,11 +122,11 @@ class UserDaoImplTest {
 
     @Test
     void getAllFriends() {
-        final User user1 = userForTest();
+        final User user1 = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
-        final User user2 = new User().setId(2L).setLogin("King").setEmail("hello@google.com");
-        final User user3 = new User().setId(3L).setLogin("Ken").setEmail("he@google.com");
+        final User user2 = user2ForTest();
+        final User user3 = user3ForTest();
         userDao.add(user2);
         userDao.add(user3);
         userDao.addFriend(1L, user2.getId());
@@ -142,11 +143,11 @@ class UserDaoImplTest {
 
     @Test
     void getCommonFriends() {
-        final User user1 = userForTest();
+        final User user1 = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
-        final User user2 = new User().setId(2L).setLogin("King").setEmail("hello@google.com");
-        final User user3 = new User().setId(3L).setLogin("Ken").setEmail("he@google.com");
+        final User user2 = user2ForTest();
+        final User user3 = user3ForTest();
         userDao.add(user2);
         userDao.add(user3);
         userDao.addFriend(1L, 2L);
@@ -161,10 +162,10 @@ class UserDaoImplTest {
 
     @Test
     void deleteFriend() {
-        final User user1 = userForTest();
+        final User user1 = user1ForTest();
         final UserDao userDao = new UserDaoImpl(jdbcTemplate);
         userDao.add(user1);
-        final User user2 = new User().setId(2L).setLogin("King").setEmail("hello@google.com");
+        final User user2 = user2ForTest();
         userDao.add(user2);
         userDao.addFriend(1L, 2L);
         userDao.deleteFriend(1L, 2L);
