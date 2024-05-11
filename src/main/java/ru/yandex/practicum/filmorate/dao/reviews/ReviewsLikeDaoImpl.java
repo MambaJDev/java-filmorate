@@ -43,18 +43,14 @@ public class ReviewsLikeDaoImpl implements ReviewsLikeDao {
     @Override
     public void deleteLike(Integer reviewId, Integer userId) {
         String sql = "delete from reviews_like where is_like = true and review_id = ? and user_id = ?";
-
         jdbcTemplate.update(sql, reviewId, userId);
-
         log.info("Пользователь ID = {} удалил лайк отзыву ID = {}", userId, reviewId);
     }
 
     @Override
     public void deleteDislike(Integer reviewId, Integer userId) {
         String sql = "delete from reviews_like where is_like = false and review_id = ? and user_id = ?";
-
         jdbcTemplate.update(sql, reviewId, userId);
-
         log.info("Пользователь ID = {} удалил дизлайк отзыву ID = {}", userId, reviewId);
     }
 

@@ -29,24 +29,22 @@ public class ReviewsDaoImpl implements ReviewsDao {
 
     @Override
     public Review createReview(Review review) {
+        filmDao.getFilmById(review.getFilmId().longValue());
+        userDao.getUserById(review.getUserId().longValue());
+
         SimpleJdbcInsert insert = new SimpleJdbcInsert(jdbcTemplate)
                 .withTableName("reviews")
                 .usingGeneratedKeyColumns("id");
         int reviewId = (int) insert.executeAndReturnKey(new MapSqlParameterSource("content", review.getContent())
                 .addValue("is_positive", review.getIsPositive()));
-
         review.setReviewId(reviewId);
 
-        if (review.getUserId() != null && review.getUserId() > 0
-                && review.getFilmId() != null && review.getFilmId() > 0) {
-            SimpleJdbcInsert insert2 = new SimpleJdbcInsert(jdbcTemplate)
-                    .withTableName("reviews_users_films")
-                    .usingColumns("review_id", "user_id", "film_id");
-            insert2.execute(new MapSqlParameterSource("review_id", review.getReviewId())
-                    .addValue("user_id", review.getUserId())
-                    .addValue("film_id", review.getFilmId()));
-        }
-
+        SimpleJdbcInsert insert2 = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("reviews_users_films")
+                .usingColumns("review_id", "user_id", "film_id");
+        insert2.execute(new MapSqlParameterSource("review_id", review.getReviewId())
+                .addValue("user_id", review.getUserId())
+                .addValue("film_id", review.getFilmId()));
 
         log.info("Создали отзыв с ID = {}", review.getReviewId());
         return review;
@@ -54,8 +52,10 @@ public class ReviewsDaoImpl implements ReviewsDao {
 
     @Override
     public Review updateReview(Review review) {
-        String sql = "update reviews set content = ?, is_positive = ? where id = ?";
+        filmDao.getFilmById(review.getFilmId().longValue());
+        userDao.getUserById(review.getUserId().longValue());
 
+        String sql = "update reviews set content = ?, is_positive = ? where id = ?";
         jdbcTemplate.update(sql,
                 review.getContent(),
                 review.getIsPositive(),
@@ -128,7 +128,6 @@ public class ReviewsDaoImpl implements ReviewsDao {
     @Override
     public void deleteAllReviews() {
         String sql = "delete from reviews";
-
         jdbcTemplate.update(sql);
         log.info("Удалили все отзывы");
     }
@@ -136,7 +135,6 @@ public class ReviewsDaoImpl implements ReviewsDao {
     @Override
     public void deleteReviewById(Integer id) {
         String sql = "delete from reviews where id = ?";
-
         jdbcTemplate.update(sql, id);
         log.info("Удалили отзыв под ID = {}", id);
     }
