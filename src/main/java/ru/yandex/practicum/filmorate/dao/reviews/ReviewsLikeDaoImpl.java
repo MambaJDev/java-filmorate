@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ReviewsLikeDaoImpl implements ReviewsLikeDao {
 
-    JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void addLike(Integer reviewId, Integer userId) {
@@ -53,5 +53,4 @@ public class ReviewsLikeDaoImpl implements ReviewsLikeDao {
         jdbcTemplate.update(sql, reviewId, userId);
         log.info("Пользователь ID = {} удалил дизлайк отзыву ID = {}", userId, reviewId);
     }
-
 }
