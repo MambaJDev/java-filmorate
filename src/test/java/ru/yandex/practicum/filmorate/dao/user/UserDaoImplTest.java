@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ class UserDaoImplTest {
         userDao.add(user1);
         userDao.deleteUserById(Math.toIntExact(user1.getId()));
 
-        Assertions.assertThrows(EmptyResultDataAccessException.class,
+        Assertions.assertThrows(NotFoundException.class,
                 () -> userDao.getUserById(1L));
     }
 
