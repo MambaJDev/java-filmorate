@@ -8,8 +8,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.dao.film.FilmDaoImpl;
-import ru.yandex.practicum.filmorate.dao.user.UserDaoImpl;
+import ru.yandex.practicum.filmorate.dao.film.FilmDao;
+import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
@@ -23,8 +23,8 @@ import java.util.List;
 public class ReviewsDaoImpl implements ReviewsDao {
 
     private final JdbcTemplate jdbcTemplate;
-    private FilmDaoImpl filmDao;
-    private UserDaoImpl userDao;
+    private final FilmDao filmDao;
+    private final UserDao userDao;
 
 
     @Override
