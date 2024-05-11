@@ -3,10 +3,14 @@ package ru.yandex.practicum.filmorate.dao.reviews;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.film.FilmDaoImpl;
+import ru.yandex.practicum.filmorate.dao.user.UserDaoImpl;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.sql.ResultSet;
@@ -19,6 +23,8 @@ import java.util.List;
 public class ReviewsDaoImpl implements ReviewsDao {
 
     private final JdbcTemplate jdbcTemplate;
+    private FilmDaoImpl filmDao;
+    private UserDaoImpl userDao;
 
 
     @Override
@@ -29,21 +35,21 @@ public class ReviewsDaoImpl implements ReviewsDao {
         int reviewId = (int) insert.executeAndReturnKey(new MapSqlParameterSource("content", review.getContent())
                 .addValue("is_positive", review.getIsPositive()));
 
-        review.setId(reviewId);
+        review.setReviewId(reviewId);
 
-
-        if (review.getUserId() != null && review.getFilmId() != null) {
+        if (review.getUserId() != null && review.getUserId() > 0
+                && review.getFilmId() != null && review.getFilmId() > 0) {
             SimpleJdbcInsert insert2 = new SimpleJdbcInsert(jdbcTemplate)
                     .withTableName("reviews_users_films")
                     .usingColumns("review_id", "user_id", "film_id");
-            insert2.execute(new MapSqlParameterSource("review_id", review.getId())
+            insert2.execute(new MapSqlParameterSource("review_id", review.getReviewId())
                     .addValue("user_id", review.getUserId())
                     .addValue("film_id", review.getFilmId()));
         }
 
-        log.info("Создали отзыв с ID = {}", review.getId());
-        return review;
 
+        log.info("Создали отзыв с ID = {}", review.getReviewId());
+        return review;
     }
 
     @Override
@@ -53,55 +59,70 @@ public class ReviewsDaoImpl implements ReviewsDao {
         jdbcTemplate.update(sql,
                 review.getContent(),
                 review.getIsPositive(),
-                review.getId());
+                review.getReviewId());
 
-        log.info("Обновили отзыв с ID = {}", review.getId());
-        return review;
+        log.info("Обновили отзыв с ID = {}", review.getReviewId());
+        return getReviewById(review.getReviewId());
     }
 
     @Override
     public List<Review> getAllReviews() {
-        String sql = "select r.id, r.content, r.is_positive, (count(rlt.review_id) - count(rlf.review_id)) as reviewUseful, ruf.user_id, ruf.film_id " +
-                "from reviews as r " +
-                "left join reviews_users_films as ruf on r.id = ruf.review_id " +
-                "left join (select * from reviews_like where is_like = true) as rlt on r.id = rlt.review_id " +
-                "left join (select * from reviews_like where is_like = false) as rlf on r.id = rlf.review_id " +
-                "group by r.id " +
-                "order by reviewUseful desc";
+        try {
+            String sql = "select r.id, r.content, r.is_positive, (count(rlt.review_id) - count(rlf.review_id)) as reviewUseful, ruf.user_id, ruf.film_id " +
+                    "from reviews as r " +
+                    "left join reviews_users_films as ruf on r.id = ruf.review_id " +
+                    "left join (select * from reviews_like where is_like = true) as rlt on r.id = rlt.review_id " +
+                    "left join (select * from reviews_like where is_like = false) as rlf on r.id = rlf.review_id " +
+                    "group by r.id " +
+                    "order by reviewUseful desc";
 
-        log.info("Получили список всех отзывов");
-        return jdbcTemplate.query(sql, this::mapRow);
+            log.info("Получили список всех отзывов");
+            return jdbcTemplate.query(sql, this::mapRow);
+        } catch (EmptyResultDataAccessException e) {
+            log.error("Отзыв не найден");
+            throw new NotFoundException("Отзыв не найден");
+        }
     }
 
     @Override
     public List<Review> getReviewsByFilmId(Integer filmId, Integer count) {
-        String sql = "select r.id, r.content, r.is_positive, (count(rlt.user_id) - count(rlf.user_id)) as reviewUseful, ruf.user_id, ruf.film_id " +
-                "from reviews as r " +
-                "left join reviews_users_films as ruf on r.id = ruf.review_id " +
-                "left join (select * from reviews_like where is_like = true) as rlt on r.id = rlt.review_id " +
-                "left join (select * from reviews_like where is_like = false) as rlf on r.id = rlf.review_id " +
-                "where ruf.film_id = ?" +
-                "group by r.id " +
-                "order by reviewUseful desc " +
-                "limit ?";
+        try {
+            String sql = "select r.id, r.content, r.is_positive, (count(rlt.user_id) - count(rlf.user_id)) as reviewUseful, ruf.user_id, ruf.film_id " +
+                    "from reviews as r " +
+                    "left join reviews_users_films as ruf on r.id = ruf.review_id " +
+                    "left join (select * from reviews_like where is_like = true) as rlt on r.id = rlt.review_id " +
+                    "left join (select * from reviews_like where is_like = false) as rlf on r.id = rlf.review_id " +
+                    "where ruf.film_id = ?" +
+                    "group by r.id " +
+                    "order by reviewUseful desc " +
+                    "limit ?";
 
-        log.info("Получили список всех отзывов у фильма с ID = {} с лимитом = {}", filmId, count);
-        return jdbcTemplate.query(sql, this::mapRow, filmId, count);
+            log.info("Получили список всех отзывов у фильма с ID = {} с лимитом = {}", filmId, count);
+            return jdbcTemplate.query(sql, this::mapRow, filmId, count);
+        } catch (EmptyResultDataAccessException e) {
+            log.error("Отзыв не найден");
+            throw new NotFoundException("Отзыв не найден");
+        }
     }
 
 
     @Override
     public Review getReviewById(Integer id) {
-        String sql = "select r.id, r.content, r.is_positive, (count(rlt.user_id) - count(rlf.user_id)) as reviewUseful, ruf.user_id, ruf.film_id " +
-                "from reviews as r " +
-                "left join reviews_users_films as ruf on r.id = ruf.review_id " +
-                "left join (select * from reviews_like where is_like = true) as rlt on r.id = rlt.review_id " +
-                "left join (select * from reviews_like where is_like = false) as rlf on r.id = rlf.review_id " +
-                "where r.id = ?" +
-                "group by r.id ";
+        try {
+            String sql = "select r.id, r.content, r.is_positive, (count(rlt.user_id) - count(rlf.user_id)) as reviewUseful, ruf.user_id, ruf.film_id " +
+                    "from reviews as r " +
+                    "left join reviews_users_films as ruf on r.id = ruf.review_id " +
+                    "left join (select * from reviews_like where is_like = true) as rlt on r.id = rlt.review_id " +
+                    "left join (select * from reviews_like where is_like = false) as rlf on r.id = rlf.review_id " +
+                    "where r.id = ?" +
+                    "group by r.id ";
 
-        log.info("Получили отзыв под ID = {}", id);
-        return jdbcTemplate.queryForObject(sql, this::mapRow, id);
+            log.info("Получили отзыв под ID = {}", id);
+            return jdbcTemplate.queryForObject(sql, this::mapRow, id);
+        } catch (EmptyResultDataAccessException e) {
+            log.error("Отзыв не найден");
+            throw new NotFoundException("Отзыв не найден");
+        }
     }
 
     @Override
@@ -124,7 +145,7 @@ public class ReviewsDaoImpl implements ReviewsDao {
     private Review mapRow(ResultSet rs, int rowNum) throws SQLException {
         Review review = new Review();
 
-        review.setId(rs.getInt("id"));
+        review.setReviewId(rs.getInt("id"));
         review.setContent(rs.getString("content"));
         review.setIsPositive(rs.getBoolean("is_positive"));
         review.setUserId(rs.getInt("user_id"));

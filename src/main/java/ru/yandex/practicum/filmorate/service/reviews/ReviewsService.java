@@ -23,12 +23,12 @@ public class ReviewsService {
         return reviewsDao.updateReview(review);
     }
 
-    public List<Review> getAllReviews() {
-        return reviewsDao.getAllReviews();
-    }
-
     public List<Review> getReviewsByFilmId(Integer filmId, Integer count) {
-        return reviewsDao.getReviewsByFilmId(filmId, count);
+        if (filmId == null) {
+            return reviewsDao.getAllReviews();
+        } else {
+            return reviewsDao.getReviewsByFilmId(filmId, count);
+        }
     }
 
     public Review getReviewById(Integer id) {

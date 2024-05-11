@@ -67,8 +67,8 @@
 
   CREATE TABLE if not exists reviews_users_films (
    review_id integer not null REFERENCES reviews(id) on delete cascade,
-   user_id integer not null REFERENCES users(id) on delete cascade ,
-   film_id integer not null REFERENCES films(id) on delete cascade
+   user_id integer not null,
+   film_id integer not null
   );
 
   CREATE TABLE IF NOT EXISTS reviews_like(

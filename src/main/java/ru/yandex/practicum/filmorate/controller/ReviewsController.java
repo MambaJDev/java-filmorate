@@ -1,26 +1,30 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.reviews.ReviewsService;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping("/reviews")
 @AllArgsConstructor
+@Slf4j
 public class ReviewsController {
 
     ReviewsService reviewsService;
 
     @PostMapping
-    public Review createReview(@RequestBody Review review) {
+    public Review createReview(@RequestBody @Valid Review review) {
         return reviewsService.createReview(review);
     }
 
     @PutMapping
-    public Review updateReview(@RequestBody Review review) {
+    public Review updateReview(@RequestBody @Valid Review review) {
         return reviewsService.updateReview(review);
     }
 
@@ -32,11 +36,7 @@ public class ReviewsController {
     @GetMapping
     public List<Review> getReviewsByFilmId(@RequestParam(required = false) Integer filmId,
                                            @RequestParam(defaultValue = "10", required = false) Integer count) {
-        if (filmId == null) {
-            return reviewsService.getAllReviews();
-        } else {
-            return reviewsService.getReviewsByFilmId(filmId, count);
-        }
+        return reviewsService.getReviewsByFilmId(filmId, count);
     }
 
     @DeleteMapping
