@@ -41,7 +41,11 @@ public class FilmDaoImpl implements FilmDao {
         }
         setFilmMpa(film);
         setFilmGenres(film);
-        setFilmDirectors(film);
+        try {
+            setFilmDirectors(film);
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Режиссер не найден");
+        }
 
         log.info("Фильм с ID = {} полностью добавился имя = {}, рейтинг = {}, список жанров = {}, режиссеры = {}",
                 film.getId(), film.getName(), film.getMpa() == null ? "null" : film.getMpa().getName(), getAllGenresOfFilmToString(film), film.getDirectors());

@@ -1,22 +1,20 @@
 package ru.yandex.practicum.filmorate.dao.film;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
+import ru.yandex.practicum.filmorate.dao.director.DirectorDao;
+import ru.yandex.practicum.filmorate.dao.director.DirectorDaoImpl;
 import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.dao.user.UserDaoImpl;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -24,7 +22,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 @JdbcTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@Disabled
 class FilmDaoImplTest {
     private final JdbcTemplate jdbcTemplate;
 
@@ -36,7 +33,7 @@ class FilmDaoImplTest {
                 .setReleaseDate("1997-07-02")
                 .setDuration(98L)
                 .setMpa(new Mpa(3L, "PG-13"))
-                .setGenres(List.of(new Genre(1L, "Комедия")));
+                .setGenres(List.of(new Genre(2L, "Драма")));
     }
 
     private Film film2ForTest() {
@@ -50,6 +47,24 @@ class FilmDaoImplTest {
                 .setGenres(List.of(new Genre(1L, "Комедия")));
     }
 
+    private User user1ForTest() {
+        return new User()
+                .setId(1L)
+                .setEmail("user1@email.ru")
+                .setName("Ivan Petrov")
+                .setLogin("vanya123")
+                .setBirthday("1990-01-01");
+    }
+
+    private User user2ForTest() {
+        return new User()
+                .setId(2L)
+                .setEmail("user2@email.ru")
+                .setName("Name2")
+                .setLogin("login2")
+                .setBirthday("2000-01-01");
+    }
+
     @Test
     void addFilmToDatabase() {
         final Film film1 = film1ForTest();
@@ -58,9 +73,8 @@ class FilmDaoImplTest {
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
         filmDao.add(film2);
-        final List<Film> savedList = filmDao.getAll();
 
-        assertThat(savedList.size())
+        assertThat(filmDao.getAll().size())
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(2);
@@ -72,31 +86,29 @@ class FilmDaoImplTest {
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
-        filmDao.update(new Film()
-                .setId(1L)
-                .setName("Women in Red")
-                .setDescription("American sci-fi action comedy film")
-                .setReleaseDate("1997-07-02")
-                .setDuration(98L)
-                .setMpa(new Mpa(3L, "PG-13"))
-                .setGenres(List.of(new Genre(1L, "Комедия"))));
 
-        Film savedFilm = filmDao.getFilmById(1L);
+        Film film2 = film2ForTest().setId(1L);
+        filmDao.update(film2);
 
-        assertThat(savedFilm.getName())
+        assertThat(filmDao.getFilmById(1L))
                 .usingDefaultComparator()
-                .isEqualTo("Women in Red");
+                .isEqualTo(film2);
     }
 
     @Test
     void deleteFilm() {
-        final Film film1 = film1ForTest();
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
+        final Film film1 = film1ForTest();
+        final Film film2 = film2ForTest();
         filmDao.add(film1);
-        filmDao.deleteFilmById(Math.toIntExact(film1.getId()));
-        Assertions.assertThrows(EmptyResultDataAccessException.class,
-                () -> filmDao.getFilmById(film1.getId()));
+        filmDao.add(film2);
+        filmDao.deleteFilmById(1);
+
+        assertThat(filmDao.getAll())
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film2));
     }
 
     @Test
@@ -105,9 +117,8 @@ class FilmDaoImplTest {
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
-        final Film savedFilm = filmDao.getFilmById(1L);
 
-        assertThat(savedFilm)
+        assertThat(filmDao.getFilmById(1L))
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(film1);
@@ -119,42 +130,64 @@ class FilmDaoImplTest {
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
-        final List<Film> newFilmList = List.of(film1);
-        final List<Film> savedFilmList = filmDao.getAll();
 
-        assertThat(savedFilmList)
+        assertThat(filmDao.getAll())
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(newFilmList);
+                .isEqualTo(List.of(film1));
     }
 
     @Test
     void getPopularFilms() {
-        final Film film1 = film1ForTest();
-        final Film film2 = film2ForTest();
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
+
+        Film film1 = film1ForTest();
+        Film film2 = film2ForTest();
+        Film film3 = film2ForTest().setId(3L).setReleaseDate("1997-07-02");
+        Film film4 = film1ForTest().setId(4L);
         filmDao.add(film1);
         filmDao.add(film2);
-        final User user1 = new User().setId(2L).setLogin("King").setEmail("hello@google.com");
-        final User user2 = new User().setId(3L).setLogin("Ken").setEmail("he@google.com");
+        filmDao.add(film3);
+        filmDao.add(film4);
+
+        User user1 = user1ForTest();
+        User user2 = user2ForTest();
+        User user3 = user2ForTest().setId(3L).setLogin("login3");
         userDao.add(user1);
         userDao.add(user2);
-        filmDao.addLike(film2.getId(), user1.getId());
-        filmDao.addLike(film2.getId(), user2.getId());
-        filmDao.addLike(film1.getId(), user2.getId());
+        userDao.add(user3);
 
-        final List<Film> savedFilmList = filmDao.getPopularFilms(1, null, null);
+        filmDao.addLike(1L, 1L);
+        filmDao.addLike(1L, 2L);
+        filmDao.addLike(1L, 3L);
+        filmDao.addLike(2L, 1L);
+        filmDao.addLike(2L, 2L);
+        filmDao.addLike(3L, 1L);
 
-        assertThat(savedFilmList.size())
+        film1 = filmDao.getFilmById(1L);
+        film2 = filmDao.getFilmById(2L);
+        film3 = filmDao.getFilmById(3L);
+
+        assertThat(filmDao.getPopularFilms(10, null, null))
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(1);
+                .isEqualTo(List.of(film1, film2, film3, film4));
 
-        assertThat(savedFilmList.get(0).getId())
+        assertThat(filmDao.getPopularFilms(10, 1, null))
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(film2.getId());
+                .isEqualTo(List.of(film2, film3));
+
+        assertThat(filmDao.getPopularFilms(10, null, 1997))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film1, film3, film4));
+
+        assertThat(filmDao.getPopularFilms(10, 2, 1997))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film1, film4));
     }
 
     @Test
@@ -163,15 +196,14 @@ class FilmDaoImplTest {
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
-        final User user1 = new User().setLogin("King").setEmail("hello@google.com");
+        final User user1 = user1ForTest();
         userDao.add(user1);
-        filmDao.addLike(film1.getId(), user1.getId());
-        int likes = filmDao.getFilmById(film1.getId()).getLikes();
+        filmDao.addLike(1L, 1L);
 
-        assertThat(likes)
+        assertThat(filmDao.getFilmById(1L).getUserIdLikes())
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(1);
+                .isEqualTo(Set.of(1L));
     }
 
     @Test
@@ -180,15 +212,128 @@ class FilmDaoImplTest {
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
         FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
         filmDao.add(film1);
-        final User user1 = new User().setLogin("King").setEmail("hello@google.com");
+        final User user1 = user1ForTest();
         userDao.add(user1);
-        filmDao.addLike(film1.getId(), user1.getId());
-        filmDao.deleteLike(film1.getId(), user1.getId());
-        int likes = filmDao.getFilmById(film1.getId()).getLikes();
+        filmDao.addLike(1L, 1L);
+        filmDao.deleteLike(1L, 1L);
 
-        assertThat(likes)
+        assertThat(filmDao.getFilmById(1L).getUserIdLikes())
                 .isNotNull()
                 .usingRecursiveComparison()
-                .isEqualTo(0);
+                .isEqualTo(Collections.emptySet());
+    }
+
+    @Test
+    void deleteFilmById() {
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
+
+        Film film1 = film1ForTest();
+        filmDao.add(film1);
+        Film film2 = film2ForTest();
+        filmDao.add(film2);
+        filmDao.deleteFilmById(1);
+
+        assertThat(filmDao.getAll())
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film2));
+    }
+
+    @Test
+    void deleteAllFilms() {
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
+
+        Film film1 = film1ForTest();
+        filmDao.add(film1);
+        Film film2 = film2ForTest();
+        filmDao.add(film2);
+        filmDao.deleteAllFilms();
+
+        assertThat(filmDao.getAll())
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(Collections.emptyList());
+    }
+
+    @Test
+    void getFilmsByDirector() {
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
+        DirectorDao directorDao = new DirectorDaoImpl(jdbcTemplate);
+
+        Director director1 = new Director(1, "director1");
+        Director director2 = new Director(2, "director2");
+        directorDao.addDirector(director1);
+        directorDao.addDirector(director2);
+
+        Film film1 = film1ForTest().setDirectors(Set.of(director1));
+        Film film2 = film2ForTest().setDirectors(Set.of(director2));
+        Film film3 = film2ForTest().setId(3L).setDirectors(Set.of(director1));
+        filmDao.add(film1);
+        filmDao.add(film2);
+        filmDao.add(film3);
+
+        User user1 = user1ForTest();
+        User user2 = user2ForTest();
+        userDao.add(user1);
+        userDao.add(user2);
+
+        filmDao.addLike(1L, 1L);
+        filmDao.addLike(1L, 2L);
+        filmDao.addLike(3L, 1L);
+        film1 = filmDao.getFilmById(1L);
+        film3 = filmDao.getFilmById(3L);
+
+        assertThat(filmDao.getFilmsByDirector("likes", 1))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film3, film1));
+
+        assertThat(filmDao.getFilmsByDirector("year", 1))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film1, film3));
+    }
+
+    @Test
+    void getCommonFilms() {
+        UserDao userDao = new UserDaoImpl(jdbcTemplate);
+        FilmDao filmDao = new FilmDaoImpl(jdbcTemplate, userDao);
+
+        Film film1 = film1ForTest();
+        Film film2 = film2ForTest();
+        Film film3 = film2ForTest().setId(3L);
+        filmDao.add(film1);
+        filmDao.add(film2);
+        filmDao.add(film3);
+
+        User user1 = user1ForTest();
+        User user2 = user2ForTest();
+        User user3 = user2ForTest().setId(3L).setLogin("login3");
+        userDao.add(user1);
+        userDao.add(user2);
+        userDao.add(user3);
+
+        filmDao.addLike(1L, 1L);
+        filmDao.addLike(1L, 2L);
+        filmDao.addLike(1L, 3L);
+        filmDao.addLike(2L, 1L);
+        filmDao.addLike(3L, 2L);
+        filmDao.addLike(3L, 1L);
+
+        film1 = filmDao.getFilmById(1L);
+        film3 = filmDao.getFilmById(3L);
+
+        assertThat(filmDao.getCommonFilms(1L, 2L))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film1, film3));
+
+        assertThat(filmDao.getCommonFilms(1L, 3L))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(film1));
     }
 }
