@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.List;
@@ -78,5 +79,11 @@ public class UserDbService implements UserService {
     public List<User> getCommonFriends(Long userID, Long otherID) {
         log.info("Поступил GET-запрос на получение всех общих друзей юзеров с ID {} и {} ", userID, otherID);
         return userDao.getCommonFriends(userID, otherID);
+    }
+
+    @Override
+    public List<Feed> getFeedHistory(Long id) {
+        getUserById(id);
+        return userDao.getFeedHistory(id);
     }
 }

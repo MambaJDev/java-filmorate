@@ -12,8 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 public class ReviewsService {
 
-    ReviewsDao reviewsDao;
-    ReviewsLikeDao reviewsLikeDao;
+    private final ReviewsDao reviewsDao;
+    private final ReviewsLikeDao reviewsLikeDao;
 
     public Review createReview(Review review) {
         return reviewsDao.createReview(review);

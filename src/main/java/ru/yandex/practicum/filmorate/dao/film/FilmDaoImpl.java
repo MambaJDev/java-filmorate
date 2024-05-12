@@ -13,6 +13,8 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -141,7 +143,8 @@ public class FilmDaoImpl implements FilmDao {
         } else {
             String yearStart = year + "-01-01";
             String yearEnd = year + "-12-31";
-            sql = sql + " join films_genres fg on fg.film_id=films.id where (fg.genre_id=? and (release_date between ? and ?)) order by likes desc limit ?";
+            sql = sql + " join films_genres fg on fg.film_id=films.id " +
+                    "where (fg.genre_id=? and (release_date between ? and ?)) order by likes desc limit ?";
             films = jdbcTemplate.query(sql, filmRowMapper(), genreId, yearStart, yearEnd, count);
             log.info("Получен список популярных фильмов. Количество популярных фильмов = {}", films.size());
         }
@@ -153,6 +156,7 @@ public class FilmDaoImpl implements FilmDao {
     public void addLike(Long filmID, Long userID) {
         getFilmById(filmID);
         userDao.getUserById(userID);
+        userDao.createFeedHistory(userID, EventType.LIKE, Operation.ADD, filmID);
         if (jdbcTemplate.update("insert into films_users(film_id, user_id) values (?, ?)", filmID, userID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
@@ -166,6 +170,7 @@ public class FilmDaoImpl implements FilmDao {
     public void deleteLike(Long filmID, Long userID) {
         getFilmById(filmID);
         userDao.getUserById(userID);
+        userDao.createFeedHistory(userID, EventType.LIKE, Operation.REMOVE, filmID);
         if (jdbcTemplate.update("delete from films_users where film_id = ? and user_id = ?", filmID, userID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
@@ -221,11 +226,11 @@ public class FilmDaoImpl implements FilmDao {
     public List<Film> getCommonFilms(Long userId, Long friendId) {
         userDao.getUserById(userId);
         userDao.getUserById(friendId);
-        return jdbcTemplate.query("select films.id, films.name, films.description, films.release_date, films.duration, films.mpa_id, films.likes from films join (SELECT film_id FROM films_users WHERE user_id = ? OR user_id = ? " +
-                        "GROUP BY film_id HAVING COUNT(DISTINCT user_id) = 2) as common on common.film_id=films.id", filmRowMapper(),
-                userId, friendId);
-
-
+        return jdbcTemplate.query("select films.id, films.name, films.description, films.release_date, " +
+                        "films.duration, films.mpa_id, films.likes from films " +
+                        "join (SELECT film_id FROM films_users WHERE user_id = ? OR user_id = ? " +
+                        "GROUP BY film_id HAVING COUNT(DISTINCT user_id) = 2) as common on common.film_id=films.id",
+                filmRowMapper(), userId, friendId);
     }
 
     private void setLikeIntoDataBase(Long filmID, int likeAmount) {
