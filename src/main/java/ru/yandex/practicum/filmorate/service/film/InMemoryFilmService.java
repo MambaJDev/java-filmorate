@@ -88,6 +88,7 @@ public class InMemoryFilmService implements FilmService {
             throw new NotFoundException("Фильма с таким ID не существует");
         }
     }
+
     @Override
     public List<Film> getRecommendations(Long id) {
         return null;
