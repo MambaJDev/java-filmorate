@@ -28,7 +28,6 @@ public class ReviewsDaoImpl implements ReviewsDao {
     private final FilmDao filmDao;
     private final UserDao userDao;
 
-
     @Override
     public Review createReview(Review review) {
         filmDao.getFilmById(review.getFilmId().longValue());
