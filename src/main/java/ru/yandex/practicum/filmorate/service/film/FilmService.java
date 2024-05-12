@@ -30,5 +30,6 @@ public interface FilmService {
     List<Film> getFilmsByParams(String query, String by);
 
     List<Film> getCommonFilms(Long userId, Long friendId);
+    List<Film> getRecommendations(Long id);
 
 }

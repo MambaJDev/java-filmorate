@@ -91,4 +91,9 @@ public class FilmDbService implements FilmService {
         return filmDao.getCommonFilms(userId, friendId);
     }
 
+    @Override
+    public List<Film> getRecommendations(Long id) {
+        log.info("Поступил GET-запрос на получение рекомендаций {}", id);
+        return filmDao.getRecommendations(id);
+    }
 }
