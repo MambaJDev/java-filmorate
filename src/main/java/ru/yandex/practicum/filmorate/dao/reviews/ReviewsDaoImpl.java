@@ -8,10 +8,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.dao.film.FilmDao;
 import ru.yandex.practicum.filmorate.dao.film.FilmDaoImpl;
+import ru.yandex.practicum.filmorate.dao.user.UserDao;
 import ru.yandex.practicum.filmorate.dao.user.UserDaoImpl;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,8 +27,8 @@ import java.util.List;
 public class ReviewsDaoImpl implements ReviewsDao {
 
     private final JdbcTemplate jdbcTemplate;
-    private FilmDaoImpl filmDao;
-    private UserDaoImpl userDao;
+    private FilmDao filmDao;
+    private UserDao userDao;
 
 
     @Override
@@ -47,6 +51,7 @@ public class ReviewsDaoImpl implements ReviewsDao {
                 .addValue("film_id", review.getFilmId()));
 
         log.info("Создали отзыв с ID = {}", review.getReviewId());
+        userDao.createFeedHistory(review.getUserId().longValue(), EventType.REVIEW, Operation.ADD, (long) reviewId);
         return review;
     }
 
@@ -54,6 +59,8 @@ public class ReviewsDaoImpl implements ReviewsDao {
     public Review updateReview(Review review) {
         filmDao.getFilmById(review.getFilmId().longValue());
         userDao.getUserById(review.getUserId().longValue());
+        var reviewDb = getReviewById(review.getReviewId());
+        userDao.createFeedHistory(reviewDb.getUserId().longValue(), EventType.REVIEW, Operation.UPDATE, reviewDb.getReviewId().longValue());
 
         String sql = "update reviews set content = ?, is_positive = ? where id = ?";
         jdbcTemplate.update(sql,
@@ -79,8 +86,8 @@ public class ReviewsDaoImpl implements ReviewsDao {
             log.info("Получили список всех отзывов");
             return jdbcTemplate.query(sql, this::mapRow);
         } catch (EmptyResultDataAccessException e) {
-            log.error("Отзыв не найден");
-            throw new NotFoundException("Отзыв не найден");
+            log.error("Отзывы не найдены");
+            throw new NotFoundException("Отзывы не найдены");
         }
     }
 
@@ -100,11 +107,10 @@ public class ReviewsDaoImpl implements ReviewsDao {
             log.info("Получили список всех отзывов у фильма с ID = {} с лимитом = {}", filmId, count);
             return jdbcTemplate.query(sql, this::mapRow, filmId, count);
         } catch (EmptyResultDataAccessException e) {
-            log.error("Отзыв не найден");
-            throw new NotFoundException("Отзыв не найден");
+            log.error("Отзыв по фильму " + filmId + " не найден");
+            throw new NotFoundException("Отзыв по фильму " + filmId + " не найден");
         }
     }
-
 
     @Override
     public Review getReviewById(Integer id) {
@@ -120,8 +126,8 @@ public class ReviewsDaoImpl implements ReviewsDao {
             log.info("Получили отзыв под ID = {}", id);
             return jdbcTemplate.queryForObject(sql, this::mapRow, id);
         } catch (EmptyResultDataAccessException e) {
-            log.error("Отзыв не найден");
-            throw new NotFoundException("Отзыв не найден");
+            log.error("Отзыв c id " + id + " не найден");
+            throw new NotFoundException("Отзыв c id " + id + " не найден");
         }
     }
 
@@ -134,11 +140,12 @@ public class ReviewsDaoImpl implements ReviewsDao {
 
     @Override
     public void deleteReviewById(Integer id) {
+        var review = getReviewById(id);
+        userDao.createFeedHistory(review.getUserId().longValue(), EventType.REVIEW, Operation.REMOVE, (long) id);
         String sql = "delete from reviews where id = ?";
         jdbcTemplate.update(sql, id);
         log.info("Удалили отзыв под ID = {}", id);
     }
-
 
     private Review mapRow(ResultSet rs, int rowNum) throws SQLException {
         Review review = new Review();

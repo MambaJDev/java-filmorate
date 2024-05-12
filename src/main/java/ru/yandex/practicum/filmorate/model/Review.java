@@ -13,7 +13,6 @@ import javax.validation.constraints.NotNull;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Review {
-
     private Integer reviewId;
     @NotBlank
     private String content;
@@ -24,5 +23,4 @@ public class Review {
     private Integer userId;
     @NotNull
     private Integer filmId;
-
 }
