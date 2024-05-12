@@ -30,4 +30,5 @@ public interface FilmDao {
 
     List<Film> getCommonFilms(Long userId, Long friendId);
 
+    List<Film> getRecommendations(Long id);
 }
