@@ -26,5 +26,6 @@ public interface UserService {
     List<User> getAllFriends(Long id);
 
     List<User> getCommonFriends(Long userID, Long otherID);
+
     List<Feed> getFeedHistory(Long id);
 }

@@ -67,6 +67,7 @@ public class InMemoryUserService implements UserService {
     public List<User> getAll() {
         return userStorage.getAll();
     }
+
     @Override
     public List<Feed> getFeedHistory(Long id) {
         return null;

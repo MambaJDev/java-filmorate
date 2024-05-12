@@ -16,11 +16,9 @@ import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @JdbcTest
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
