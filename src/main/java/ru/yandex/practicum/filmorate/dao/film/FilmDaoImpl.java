@@ -154,13 +154,13 @@ public class FilmDaoImpl implements FilmDao {
 
     @Override
     public void addLike(Long filmID, Long userID) {
-        getFilmById(filmID);
+        Film film = getFilmById(filmID);
         userDao.getUserById(userID);
         userDao.createFeedHistory(userID, EventType.LIKE, Operation.ADD, filmID);
+        if (film.getUserIdLikes().contains(userID)) return;
         if (jdbcTemplate.update("insert into films_users(film_id, user_id) values (?, ?)", filmID, userID) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
-        Film film = getFilmById(filmID);
         film.getUserIdLikes().add(userID);
         film.setLikes(film.getLikes() + 1);
         setLikeIntoDataBase(filmID, film.getLikes());
