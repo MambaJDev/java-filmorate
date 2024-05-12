@@ -343,6 +343,7 @@ public class FilmDaoImpl implements FilmDao {
         return jdbcTemplate.queryForObject("select * from genres where id = ?", (rs, rowNum) ->
                 new Genre(rs.getLong("id"), rs.getString("name")), id);
     }
+    
     @Override
     public List<Film> getRecommendations(Long id) {
         String sqlGetFilmsIdByUserId = "select film_id from films_users where user_id=?";
