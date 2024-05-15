@@ -55,12 +55,9 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void deleteUserById(Integer id) {
         try {
-            String sql = "delete from users where id = ?";
-            jdbcTemplate.update(sql, id);
-            String sql2 = "delete from films_users where user_id = ?";
-            jdbcTemplate.update(sql2, id);
-            String sql3 = "delete from friends where user_id = ?";
-            jdbcTemplate.update(sql3, id);
+            jdbcTemplate.update("delete from users where id = ?", id);
+            jdbcTemplate.update("delete from films_users where user_id = ?", id);
+            jdbcTemplate.update("delete from friends where user_id = ?", id);
         } catch (Exception e) {
             log.error("Ошибка при удалении пользователя из БД");
             throw new NotFoundException("Ошибка при удалении пользователя из БД");
@@ -70,12 +67,9 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void deleteAllUsers() {
         try {
-            String sql = "delete from users";
-            jdbcTemplate.update(sql);
-            String sql2 = "delete from films_users";
-            jdbcTemplate.update(sql2);
-            String sql3 = "delete from friends";
-            jdbcTemplate.update(sql3);
+            jdbcTemplate.update("delete from users");
+            jdbcTemplate.update("delete from films_users");
+            jdbcTemplate.update("delete from friends");
         } catch (Exception e) {
             log.error("Ошибка при удалении всех пользователей из БД");
             throw new NotFoundException("Ошибка при удалении всех пользователей из БД");

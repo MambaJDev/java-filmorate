@@ -29,6 +29,91 @@ class ReviewsDaoImplTest {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Test
+    void addAndGetReviewsByFilmId() {
+        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
+        Review review1 = createBadReview();
+        Review review2 = createGoodReview();
+        reviewsDao.createReview(review1);
+        reviewsDao.createReview(review2);
+
+        assertThat(reviewsDao.getReviewsByFilmId(1, 10))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(review1, review2));
+    }
+
+    @Test
+    void updateReview() {
+        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
+        Review review = createBadReview();
+        reviewsDao.createReview(review);
+        Review updatedReview = createGoodReview();
+        updatedReview.setReviewId(1);
+        reviewsDao.updateReview(updatedReview);
+
+        assertThat(reviewsDao.getReviewById(1))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(updatedReview);
+    }
+
+    @Test
+    void getAllReviews() {
+        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
+        Review review1 = createBadReview();
+        Review review2 = createGoodReview();
+        reviewsDao.createReview(review1);
+        reviewsDao.createReview(review2);
+
+        assertThat(reviewsDao.getAllReviews())
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(review1, review2));
+    }
+
+    @Test
+    void getReviewById() {
+        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
+        Review review1 = createBadReview();
+        reviewsDao.createReview(review1);
+
+        assertThat(reviewsDao.getReviewById(1))
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(review1);
+    }
+
+    @Test
+    void deleteAllReviews() {
+        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
+        Review review1 = createBadReview();
+        Review review2 = createGoodReview();
+        reviewsDao.createReview(review1);
+        reviewsDao.createReview(review2);
+
+        reviewsDao.deleteAllReviews();
+        assertThat(reviewsDao.getAllReviews())
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(Collections.emptyList());
+    }
+
+    @Test
+    void deleteReviewById() {
+        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
+        Review review1 = createBadReview();
+        Review review2 = createGoodReview();
+        reviewsDao.createReview(review1);
+        reviewsDao.createReview(review2);
+
+        reviewsDao.deleteReviewById(1);
+
+        assertThat(reviewsDao.getAllReviews())
+                .isNotNull()
+                .usingRecursiveComparison()
+                .isEqualTo(List.of(review2));
+    }
 
     private ReviewsDao setReviewsDaoBeforeTest() {
         UserDao userDao = new UserDaoImpl(jdbcTemplate);
@@ -52,88 +137,11 @@ class ReviewsDaoImplTest {
         return new ReviewsDaoImpl(jdbcTemplate, filmDao, userDao);
     }
 
-    @Test
-    void addAndGetReviewsByFilmId() {
-        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
-        Review review1 = new Review(1, "Плохой фильм", false, 0, 1, 1);
-        Review review2 = new Review(2, "Хороший фильм", true, 0, 1, 1);
-        reviewsDao.createReview(review1);
-        reviewsDao.createReview(review2);
-
-        assertThat(reviewsDao.getReviewsByFilmId(1, 10))
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(List.of(review1, review2));
+    private Review createGoodReview() {
+        return new Review(2, "Хороший фильм", true, 0, 1, 1);
     }
 
-    @Test
-    void updateReview() {
-        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
-        Review review = new Review(1, "Плохой фильм", false, 0, 1, 1);
-        reviewsDao.createReview(review);
-        Review updatedReview = new Review(1, "Update", true, 0, 1, 1);
-        reviewsDao.updateReview(updatedReview);
-
-        assertThat(reviewsDao.getReviewById(1))
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(updatedReview);
-    }
-
-    @Test
-    void getAllReviews() {
-        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
-        Review review1 = new Review(1, "Плохой фильм", false, 0, 1, 1);
-        Review review2 = new Review(2, "Хороший фильм", true, 0, 1, 1);
-        reviewsDao.createReview(review1);
-        reviewsDao.createReview(review2);
-
-        assertThat(reviewsDao.getAllReviews())
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(List.of(review1, review2));
-    }
-
-    @Test
-    void getReviewById() {
-        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
-        Review review1 = new Review(1, "Плохой фильм", false, 0, 1, 1);
-        reviewsDao.createReview(review1);
-
-        assertThat(reviewsDao.getReviewById(1))
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(review1);
-    }
-
-    @Test
-    void deleteAllReviews() {
-        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
-        Review review1 = new Review(1, "Плохой фильм", false, 0, 1, 1);
-        Review review2 = new Review(2, "Хороший фильм", true, 0, 1, 1);
-        reviewsDao.createReview(review1);
-        reviewsDao.createReview(review2);
-
-        reviewsDao.deleteAllReviews();
-        assertThat(reviewsDao.getAllReviews())
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(Collections.emptyList());
-    }
-
-    @Test
-    void deleteReviewById() {
-        ReviewsDao reviewsDao = setReviewsDaoBeforeTest();
-        Review review1 = new Review(1, "Плохой фильм", false, 0, 1, 1);
-        Review review2 = new Review(2, "Хороший фильм", true, 0, 1, 1);
-        reviewsDao.createReview(review1);
-        reviewsDao.createReview(review2);
-
-        reviewsDao.deleteReviewById(1);
-
-        assertThat(reviewsDao.getAllReviews())
-                .isNotNull()
-                .usingRecursiveComparison()
-                .isEqualTo(List.of(review2));
+    private Review createBadReview() {
+        return new Review(1, "Плохой фильм", false, 0, 1, 1);
     }
 }

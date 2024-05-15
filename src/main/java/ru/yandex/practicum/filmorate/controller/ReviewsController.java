@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,10 +19,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/reviews")
 @AllArgsConstructor
-@Slf4j
 public class ReviewsController {
 
-    ReviewsService reviewsService;
+    private final ReviewsService reviewsService;
 
     @PostMapping
     public Review createReview(@RequestBody @Valid Review review) {
