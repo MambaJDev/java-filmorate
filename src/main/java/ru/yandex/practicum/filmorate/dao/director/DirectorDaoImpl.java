@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.dao.director;
 
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Data
+@RequiredArgsConstructor
 @Slf4j
 public class DirectorDaoImpl implements DirectorDao {
 

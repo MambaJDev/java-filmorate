@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.service.director.DirectorService;
@@ -9,7 +9,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@Data
+@RequiredArgsConstructor
 @RequestMapping("/directors")
 public class DirectorController {
 
