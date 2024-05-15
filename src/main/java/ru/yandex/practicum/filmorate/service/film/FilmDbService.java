@@ -73,6 +73,9 @@ public class FilmDbService implements FilmService {
 
     @Override
     public List<Film> getFilmsByDirector(String sortBy, int directorId) {
+        if (!(sortBy.equals("year") || sortBy.equals("likes"))) {
+            throw new NotFoundException("Неправильно выбран параметр sortBy");
+        }
         log.info("Поступил GET-запрос на получение списка фильмов sortBy={}, directorId={}", sortBy, directorId);
         return filmDao.getFilmsByDirector(sortBy, directorId);
     }
