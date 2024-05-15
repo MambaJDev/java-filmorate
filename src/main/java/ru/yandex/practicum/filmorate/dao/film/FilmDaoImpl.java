@@ -350,23 +350,23 @@ public class FilmDaoImpl implements FilmDao {
             log.info("Не найдено фильмов для пользователя с идентификатором {}", id);
             return Collections.emptyList();
         }
-        String sqlAllUsersIdWhoLikedSameFilms = "select distinct user_id from films_users where film_id in " +
-                "(" + sqlGetFilmsIdByUserId + ") and user_id != ?";
+
+        String sqlAllUsersIdWhoLikedSameFilms = "select distinct fu2.user_id from films_users fu1 " +
+                "join films_users fu2 on fu1.film_id = fu2.film_id " +
+                "where fu1.user_id = ? and fu2.user_id != ?";
+
         log.info("Поиск пользователей, которым понравились те же фильмы, что и пользователю с идентификатором {}", id);
         List<Long> usersId = jdbcTemplate.query(sqlAllUsersIdWhoLikedSameFilms, (rs, rowNum) -> rs.getLong("user_id"), id, id);
         if (usersId.isEmpty()) {
             return Collections.emptyList();
         }
-        Set<Film> data = new HashSet<>();
-        for (Long userId : usersId) {
-            List<Long> userFilmsId = jdbcTemplate.query(sqlGetFilmsIdByUserId, (rs, rowNum) -> rs.getLong("film_id"), userId);
-            for (Long filmId : userFilmsId) {
-                if (!idFilmsOfOurUser.contains(filmId)) {
-                    data.add(getFilmById(filmId));
-                }
-            }
-        }
+
         log.info("Рекомендации, сгенерированные для пользователя с идентификатором {}", id);
-        return data.stream().collect(Collectors.toList());
+
+        return usersId.stream()
+                .flatMap(userId -> (jdbcTemplate.query(sqlGetFilmsIdByUserId, (rs, rowNum) -> rs.getLong("film_id"), userId)).stream())
+                .filter(filmId -> !idFilmsOfOurUser.contains(filmId))
+                .map(this::getFilmById)
+                .collect(Collectors.toList());
     }
 }
