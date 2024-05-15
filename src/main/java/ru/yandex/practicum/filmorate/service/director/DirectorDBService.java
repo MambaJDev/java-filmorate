@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.service.director;
 
-
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dao.director.DirectorDao;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -9,7 +8,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import java.util.List;
 
 @Service
-@Data
+@RequiredArgsConstructor
 public class DirectorDBService implements DirectorService {
 
     private final DirectorDao directorDao;
