@@ -82,8 +82,8 @@ public class FilmController {
 
     @GetMapping("/search")
     public List<Film> getFilmsByParams(@RequestParam(required = false) String query,
-                                       @RequestParam(required = false) String by) {
-        return filmService.getFilmsByParams(query, by);
+                                       @RequestParam(required = false) String searchType) {
+        return filmService.getFilmsByParams(query, searchType);
     }
 
     @GetMapping("/common")
