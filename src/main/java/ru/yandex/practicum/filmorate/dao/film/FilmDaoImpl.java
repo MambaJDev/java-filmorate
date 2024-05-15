@@ -202,22 +202,23 @@ public class FilmDaoImpl implements FilmDao {
     }
 
     @Override
-    public List<Film> getFilmsByParams(String query, String by) {
+    public List<Film> getFilmsByParams(String query, String searchType) {
         log.info("Получен список фильмов по параметрам");
         String sqlQueryByTitle = "select * from films where name ilike ? order by likes desc";
-        String sqlQueryByDirector = "select * from films where id in (select film_id from film_director where director_id in " +
-                "(select id from directors where name ilike ?)) order by likes desc";
-        if (by.equals("director")) {
+        String sqlQueryByDirector = "select f.id, f.name, f.description, f.release_date, f.duration, f.likes, f.mpa_id " +
+                "from films as f join film_director as fd on fd.film_id=f.id join directors as d on d.id=fd.director_id " +
+                "where d.name ilike ? order by f.likes desc";
+        if (searchType.equals("director")) {
             return jdbcTemplate.query(sqlQueryByDirector, filmRowMapper(), "%" + query + "%");
-        } else if (by.equals("title")) {
+        } else if (searchType.equals("title")) {
             return jdbcTemplate.query(sqlQueryByTitle, filmRowMapper(), "%" + query + "%");
-        } else if (by.equals("director,title") || by.equals("title,director")) {
+        } else if (searchType.equals("director,title") || searchType.equals("title,director")) {
             List<Film> filmsByTitle = jdbcTemplate.query(sqlQueryByTitle, filmRowMapper(), "%" + query + "%");
             List<Film> filmsByDirector = jdbcTemplate.query(sqlQueryByDirector, filmRowMapper(), "%" + query + "%");
             Set<Film> unionSet = new HashSet<>();
             unionSet.addAll(filmsByTitle);
             unionSet.addAll(filmsByDirector);
-            return unionSet.stream().collect(Collectors.toList());
+            return new ArrayList<>(unionSet);
         } else return Collections.emptyList();
     }
 

@@ -81,12 +81,13 @@ public class FilmDbService implements FilmService {
     }
 
     @Override
-    public List<Film> getFilmsByParams(String query, String by) {
-        if (!(by.equals("director") || by.equals("title") || by.equals("director,title") || by.equals("title,director"))) {
-            throw new NotFoundException("Неправильно выбран параметр 'by'");
+    public List<Film> getFilmsByParams(String query, String searchType) {
+        if (!(searchType.equals("director") || searchType.equals("title") || searchType.equals("director,title")
+                || searchType.equals("title,director"))) {
+            throw new NotFoundException("Некорректный параметр searchType");
         }
-        log.info("Поступил GET-запрос на получение списка фильмов по параметрам query={}, by={}", query, by);
-        return filmDao.getFilmsByParams(query, by);
+        log.info("Поступил GET-запрос на получение списка фильмов по параметрам query={}, by={}", query, searchType);
+        return filmDao.getFilmsByParams(query, searchType);
     }
 
     @Override

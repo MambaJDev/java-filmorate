@@ -73,5 +73,4 @@ public class ReviewsController {
     public void deleteDislike(@PathVariable int id, @PathVariable int userId) {
         reviewsService.deleteDislike(id, userId);
     }
-
 }
