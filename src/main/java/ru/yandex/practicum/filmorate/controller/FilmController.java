@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.film.FilmService;
 
@@ -68,9 +67,6 @@ public class FilmController {
 
     @GetMapping("/director/{directorId}")
     public List<Film> getFilmsByDirector(@RequestParam String sortBy, @PathVariable int directorId) {
-        if (!(sortBy.equals("year") || sortBy.equals("likes"))) {
-            throw new NotFoundException("Неправильно выбран параметр sortBy");
-        }
         return filmService.getFilmsByDirector(sortBy, directorId);
     }
 
