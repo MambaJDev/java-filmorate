@@ -2,14 +2,27 @@ package ru.yandex.practicum.filmorate.dao.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Feed;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.Operation;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -21,6 +34,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User add(User user) {
+        if (user.getName().isBlank()) user.setName(user.getLogin());
         String sqlQuery = "insert into users(name, email, login, birthday) values (?, ?, ?, ?)";
         if (jdbcTemplate.update(sqlQuery,
                 user.getName(),
@@ -39,17 +53,32 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public User delete(User user) {
-        String sqlQuery = "delete from users where id = ?";
-        if (jdbcTemplate.update(sqlQuery, user.getId()) == 0) {
-            log.info("Операция обновления данных юзера в БД закончилась неудачей");
+    public void deleteUserById(Integer id) {
+        try {
+            jdbcTemplate.update("delete from users where id = ?", id);
+            jdbcTemplate.update("delete from films_users where user_id = ?", id);
+            jdbcTemplate.update("delete from friends where user_id = ?", id);
+        } catch (Exception e) {
+            log.error("Ошибка при удалении пользователя из БД");
+            throw new NotFoundException("Ошибка при удалении пользователя из БД");
         }
-        log.info("Юзер с именем {} и ID {} успешно удален", user.getName(), user.getId());
-        return user;
+    }
+
+    @Override
+    public void deleteAllUsers() {
+        try {
+            jdbcTemplate.update("delete from users");
+            jdbcTemplate.update("delete from films_users");
+            jdbcTemplate.update("delete from friends");
+        } catch (Exception e) {
+            log.error("Ошибка при удалении всех пользователей из БД");
+            throw new NotFoundException("Ошибка при удалении всех пользователей из БД");
+        }
     }
 
     @Override
     public User update(User user) {
+        getUserById(user.getId());
         String sqlQuery = "update users set name = ?, email = ?, login = ?, birthday = ?  where id = ?";
         if (jdbcTemplate.update(sqlQuery,
                 user.getName(),
@@ -72,15 +101,21 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User getUserById(Long id) {
-        User user = jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper(), id);
-        log.info("Юзер успешно получен по ID = {}", id);
-        return user;
+        try {
+            User user = jdbcTemplate.queryForObject("select * from users where id = ?", userRowMapper(), id);
+            log.info("Юзер успешно получен по ID = {}", id);
+            return user;
+        } catch (EmptyResultDataAccessException e) {
+            throw new NotFoundException("Пользователь не найден" + id);
+        }
     }
 
     @Override
     public User addFriend(Long userId, Long friendId) {
         User user = getUserById(userId);
-        user.getFriends().add(friendId);
+        getUserById(friendId);
+        createFeedHistory(userId, EventType.FRIEND, Operation.ADD, friendId);
+
         if (jdbcTemplate.update("insert into friends (user_id, friend_id) values (?, ?);", userId, friendId) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
@@ -90,6 +125,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> getAllFriends(Long id) {
+        getUserById(id);
         List<User> users = jdbcTemplate.query("select * from users where id in (select friend_id " +
                 "from friends where user_id = ?)", userRowMapper(), id);
         log.info("Список друзей юзера {} получен из БД, размер списка = {}", id, users.size());
@@ -109,13 +145,44 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public void deleteFriend(Long userId, Long friendId) {
-        User user = getUserById(userId);
-        user.getFriends().remove(friendId);
+        getUserById(userId);
+        getUserById(friendId);
+        createFeedHistory(userId, EventType.FRIEND, Operation.REMOVE, friendId);
+
         if (jdbcTemplate.update("delete from friends where user_id = ? and friend_id = ?", userId, friendId) == 0) {
             log.info("Операция обновления данных в БД закончилась неудачей");
         }
-        getUserById(userId).getFriends().remove(friendId);
         log.info("Пользователь c id = {} удалился из друзей пользователя {}", friendId, userId);
+    }
+
+    @Override
+    public List<Feed> getFeedHistory(Long id) {
+        getUserById(id);
+        String sqlQuery = "select fh.id, fh.user_id, fh.create_time, et.name as event_type_name, o.name as operation_name, fh.entity_id " +
+                "from feed_history as fh " +
+                "join event_types as et on fh.event_type_id = et.id " +
+                "join operations as o on fh.operation_id = o.id " +
+                "where fh.user_id = ?";
+
+        log.info("Получена история пользователя с id: {}", id);
+        return jdbcTemplate.query(sqlQuery, this::mapRowToFeed, id);
+    }
+
+    @Override
+    public void createFeedHistory(Long userId, EventType eventType, Operation operation, Long entityId) {
+        SimpleJdbcInsert simpleJdbcInsert = new SimpleJdbcInsert(jdbcTemplate)
+                .withTableName("feed_history")
+                .usingGeneratedKeyColumns("id");
+
+        Map<String, Object> values = new HashMap<>();
+        values.put("user_id", userId);
+        values.put("create_time", Instant.now().truncatedTo(ChronoUnit.MICROS));
+        values.put("event_type_id", eventType.getIndex());
+        values.put("operation_id", operation.getIndex());
+        values.put("entity_id", entityId);
+
+        log.info("Добавлена новая запись в историю у пользователя: {}", userId);
+        simpleJdbcInsert.executeAndReturnKey(new MapSqlParameterSource(values));
     }
 
     private RowMapper<User> userRowMapper() {
@@ -137,5 +204,16 @@ public class UserDaoImpl implements UserDao {
             friends.add(sqlRowSet.getLong("friend_id"));
         }
         return friends;
+    }
+
+    private Feed mapRowToFeed(ResultSet resultSet, int rowNum) throws SQLException {
+        return Feed.builder()
+                .eventId(resultSet.getLong("id"))
+                .timestamp(resultSet.getTimestamp("create_time").getTime())
+                .userId(Long.valueOf(resultSet.getString("user_id")))
+                .eventType(EventType.valueOf((resultSet.getString("event_type_name"))))
+                .operation(Operation.valueOf(resultSet.getString("operation_name")))
+                .entityId(Long.valueOf(resultSet.getString("entity_id")))
+                .build();
     }
 }

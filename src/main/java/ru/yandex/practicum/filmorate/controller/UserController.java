@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.practicum.filmorate.model.Feed;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.film.FilmService;
 import ru.yandex.practicum.filmorate.service.user.UserService;
 
 import javax.validation.Valid;
@@ -22,6 +25,8 @@ import java.util.List;
 public class UserController {
     @Qualifier("userDbService")
     private final UserService userService;
+    @Qualifier("filmDbService")
+    private final FilmService filmService;
 
     @PostMapping
     public User add(@RequestBody @Valid User user) {
@@ -33,14 +38,24 @@ public class UserController {
         return userService.update(user);
     }
 
+    @DeleteMapping("{id}")
+    public void deleteUserById(@PathVariable Integer id) {
+        userService.deleteUserById(id);
+    }
+
     @DeleteMapping
-    public User delete(@RequestBody @Valid User user) {
-        return userService.delete(user);
+    public void deleteAllUsers() {
+        userService.deleteAllUsers();
     }
 
     @GetMapping
     public List<User> getAll() {
         return userService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return userService.getUserById(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
@@ -61,5 +76,15 @@ public class UserController {
     @DeleteMapping("/{id}/friends/{friendId}")
     public void deleteFriend(@PathVariable Long id, @PathVariable Long friendId) {
         userService.deleteFriend(id, friendId);
+    }
+
+    @GetMapping(value = "/{id}/feed")
+    public List<Feed> getFeedHistory(@PathVariable Long id) {
+        return userService.getFeedHistory(id);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<Film> getRecommendations(@PathVariable Long id) {
+        return filmService.getRecommendations(id);
     }
 }

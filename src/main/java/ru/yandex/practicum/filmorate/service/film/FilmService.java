@@ -10,15 +10,25 @@ public interface FilmService {
 
     Film update(Film film);
 
-    Film delete(Film film);
+    void deleteFilmById(Integer id);
+
+    void deleteAllFilms();
 
     Film getFilmById(Long id);
 
     List<Film> getAll();
 
-    List<Film> getPopularFilms(int count);
+    List<Film> getPopularFilms(Integer count, Integer genreId, Integer year);
 
     void addLike(Long filmID, Long userID);
 
     void deleteLike(Long filmID, Long userID);
+
+    List<Film> getFilmsByDirector(String sortBy, int directorId);
+
+    List<Film> getFilmsByParams(String query, String searchType);
+
+    List<Film> getCommonFilms(Long userId, Long friendId);
+
+    List<Film> getRecommendations(Long id);
 }
